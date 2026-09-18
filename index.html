@@ -146,13 +146,22 @@ input,select{width:100%;border:1px solid var(--line);background:#fff;border-radi
 const cats=["Alimentari","Benzina","Casa","Auto","Bollette","Affitto","Finanziamento","Tempo libero","Ristoranti","Shopping","Salute","Trasporti","Stipendio","Rimborso","Altro"];
 const fcats=["Casa","Auto","Finanze","Bollette","Abbonamenti","Tasse","Shopping","Altro"];
 const today=new Date();
-const key="budgetAppV2";
-const savingsKey="budget_auto_savings_v3";
+const key="budgetAppV3_NEW_200";
+const savingsKey="budget_auto_savings_v6_NEW_200";
 const DEFAULT_SAVINGS=200;
 // Regola fissa dell'app: accantonamento automatico di 200 € per ogni ciclo/mese.
 
 function id(){return Date.now().toString(36)+Math.random().toString(36).slice(2)}
-let D=JSON.parse(localStorage.getItem(key)||"null")||{
+let D=JSON.parse(localStorage.getItem(key)||"null");
+// Nuova installazione: recupera solo i dati dell'utente dalla versione precedente,
+// ma NON recupera il vecchio contatore del risparmio.
+if(!D){
+  try{
+    const old=JSON.parse(localStorage.getItem("budgetAppV2")||"null");
+    if(old){ D=JSON.parse(JSON.stringify(old)); }
+  }catch(e){}
+}
+D=D||{
  s:{y:today.getFullYear(),m:today.getMonth()+1,i:0,t:DEFAULT_SAVINGS,payDay:10},
  moves:[],
  future:[]
@@ -199,27 +208,24 @@ function currentCycleKey(){return iso(cycleStartDate())}
      il nuovo valore predefinito di 200 € viene applicato al primo caricamento.
 */
 function getAutoSavings(){
- const target=Math.max(0,Number(D.s.t)||0);
+ const target=DEFAULT_SAVINGS;
  const k=currentCycleKey();
  let st=null;
  try{st=JSON.parse(localStorage.getItem(savingsKey)||"null")}catch(e){}
+ // Nuovo contatore indipendente: il ciclo attuale parte SEMPRE da 200 €.
+ // Dal ciclo successivo vengono aggiunti 200 € per ogni nuovo ciclo.
  if(!st || typeof st.saved!=="number" || !st.lastCycle){
    st={saved:target,lastCycle:k};
- }else{
-   if(st.saved<=0 && target>0 && st.migrated!==true){
-     st.saved=target;
-     st.migrated=true;
-   }
-   if(st.lastCycle!==k){
-     const a=dt(st.lastCycle),b=dt(k);
-     let months=(b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth());
-     months=Math.max(1,months);
-     st.saved+=target*months;
-     st.lastCycle=k;
-   }
+ }else if(st.lastCycle!==k){
+   const a=dt(st.lastCycle),b=dt(k);
+   let cycles=(b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth());
+   cycles=Math.max(1,cycles);
+   st.saved+=target*cycles;
+   st.lastCycle=k;
  }
+ st.saved=Math.max(target,Math.round(st.saved*100)/100);
  localStorage.setItem(savingsKey,JSON.stringify(st));
- return Math.max(0,st.saved);
+ return st.saved;
 }
 
 function calc(){

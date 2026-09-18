@@ -1,9 +1,1 @@
-{
-  "name": "Budget",
-  "short_name": "Budget",
-  "start_url": "./",
-  "display": "standalone",
-  "background_color": "#f5f7fb",
-  "theme_color": "#1677ff",
-  "lang": "it"
-}
+{"name":"Budget","short_name":"Budget","start_url":"./?v=20260918","display":"standalone","background_color":"#f4f7fb","theme_color":"#2563eb","icons":[]}
