@@ -123,7 +123,7 @@ input,select{width:100%;border:1px solid var(--line);background:#fff;border-radi
 <div class="grid"><div><label>Anno</label><input id="sy" type="number"></div><div><label>Mese</label><select id="sm"></select></div></div>
 <label>Saldo iniziale</label><input id="si" type="number" step=".01">
 <label>Risparmio automatico per ciclo</label><input id="st" type="number" step=".01">
-<div class="muted" style="margin-top:6px">Predefinito: 200 € per ogni ciclo. Il risparmio è virtualmente protetto: resta sul conto ma non viene considerato spendibile.</div>
+<div class="muted" style="margin-top:6px">Fisso: 200 € per ogni ciclo/mese. Il risparmio è virtualmente protetto: resta sul conto ma non viene considerato spendibile.</div>
 <label>Giorno di riscossione / fine budget</label><select id="pd"></select>
 <div class="muted" style="margin-top:6px">Il ciclo va dal giorno successivo alla riscossione precedente fino al prossimo giorno di riscossione.</div>
 <button class="primary" style="width:100%;margin-top:13px" onclick="saveSettings()">Salva</button>
@@ -147,8 +147,9 @@ const cats=["Alimentari","Benzina","Casa","Auto","Bollette","Affitto","Finanziam
 const fcats=["Casa","Auto","Finanze","Bollette","Abbonamenti","Tasse","Shopping","Altro"];
 const today=new Date();
 const key="budgetAppV2";
-const savingsKey="budget_auto_savings_v3";
+const savingsKey="budget_auto_savings_v4";
 const DEFAULT_SAVINGS=200;
+// Regola fissa dell'app: accantonamento automatico di 200 € per ogni ciclo/mese.
 
 function id(){return Date.now().toString(36)+Math.random().toString(36).slice(2)}
 let D=JSON.parse(localStorage.getItem(key)||"null")||{
@@ -159,7 +160,7 @@ let D=JSON.parse(localStorage.getItem(key)||"null")||{
 
 if(!D.s)D.s={};
 if(!D.s.payDay)D.s.payDay=10;
-if(typeof D.s.t!=="number" || D.s.t<=0)D.s.t=DEFAULT_SAVINGS;
+D.s.t=DEFAULT_SAVINGS;
 if(typeof D.s.i!=="number")D.s.i=0;
 if(!Array.isArray(D.moves))D.moves=[];
 if(!Array.isArray(D.future))D.future=[];
@@ -198,24 +199,20 @@ function currentCycleKey(){return iso(cycleStartDate())}
      il nuovo valore predefinito di 200 € viene applicato al primo caricamento.
 */
 function getAutoSavings(){
- const target=Math.max(0,Number(D.s.t)||0);
+ const target=DEFAULT_SAVINGS;
  const k=currentCycleKey();
  let st=null;
  try{st=JSON.parse(localStorage.getItem(savingsKey)||"null")}catch(e){}
+ // Versione definitiva: parte da 200 € nel ciclo attuale,
+ // poi aggiunge esattamente 200 € a ogni nuovo ciclo.
  if(!st || typeof st.saved!=="number" || !st.lastCycle){
    st={saved:target,lastCycle:k};
- }else{
-   if(st.saved<=0 && target>0 && st.migrated!==true){
-     st.saved=target;
-     st.migrated=true;
-   }
-   if(st.lastCycle!==k){
-     const a=dt(st.lastCycle),b=dt(k);
-     let months=(b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth());
-     months=Math.max(1,months);
-     st.saved+=target*months;
-     st.lastCycle=k;
-   }
+ }else if(st.lastCycle!==k){
+   const a=dt(st.lastCycle),b=dt(k);
+   let months=(b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth());
+   months=Math.max(1,months);
+   st.saved+=target*months;
+   st.lastCycle=k;
  }
  localStorage.setItem(savingsKey,JSON.stringify(st));
  return Math.max(0,st.saved);
@@ -254,7 +251,7 @@ function render(){
  document.getElementById("cycleEndLabel").textContent=new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"2-digit"}).format(cycleEndDate());
  document.getElementById("heroSub").textContent=`Risparmio programmato ${euro(D.s.t)} · Impegni futuri ${euro(c.commitments)} · Budget fino al ${c.endIso.slice(8,10)}/${c.endIso.slice(5,7)}`;
 
- const saved=c.protectedSavings,target=Math.max(0,Number(D.s.t)||0);
+ const saved=c.protectedSavings,target=DEFAULT_SAVINGS;
  document.getElementById("savedAccum").textContent=euro(saved);
  document.getElementById("savingTarget").textContent=euro(target);
  document.getElementById("savingBar").style.width=(target>0?"100%":"0%");
@@ -364,7 +361,7 @@ function importData(e){
  let r=new FileReader();
  r.onload=()=>{
   try{let x=JSON.parse(r.result);if(!x.s||!Array.isArray(x.moves)||!Array.isArray(x.future))throw 0;
-  D=x;if(typeof D.s.t!=="number"||D.s.t<=0)D.s.t=DEFAULT_SAVINGS;save();toast("Backup importato")}
+  D=x;D.s.t=DEFAULT_SAVINGS;save();toast("Backup importato")}
   catch(_){toast("Backup non valido")}
  };
  r.readAsText(f);
@@ -381,7 +378,7 @@ function fill(){
  document.getElementById("sm").innerHTML=ms.map((x,i)=>`<option value="${i+1}">${x}</option>`).join("");
  document.getElementById("pd").innerHTML=Array.from({length:31},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join("");
  document.getElementById("sy").value=D.s.y;document.getElementById("sm").value=D.s.m;document.getElementById("si").value=D.s.i;
- document.getElementById("st").value=D.s.t;document.getElementById("pd").value=D.s.payDay||10;
+ document.getElementById("st").value=DEFAULT_SAVINGS;document.getElementById("pd").value=D.s.payDay||10;
  document.getElementById("md").value=iso(new Date());document.getElementById("fd").value=iso(new Date());
 }
 fill();render();
