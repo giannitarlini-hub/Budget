@@ -1,1 +1,1 @@
-{"name":"Budget","short_name":"Budget","start_url":"./?v=20260918-home","display":"browser","background_color":"#f4f7fb","theme_color":"#2563eb","icons":[]}
+{"name": "Store Manager – Gestione Personale", "short_name": "Store Manager", "start_url": "./", "display": "standalone", "background_color": "#f4f6fa", "theme_color": "#111827", "lang": "it"}
