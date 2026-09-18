@@ -169,7 +169,7 @@ let type="Spesa";
 
 function save(){localStorage.setItem(key,JSON.stringify(D));render()}
 function euro(n){return new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR"}).format(Number(n)||0)}
-function iso(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate()).toISOString().slice(0,10)}
+function iso(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
 function dt(s){let [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)}
 function inMonth(s){let d=dt(s);return d.getFullYear()==D.s.y&&d.getMonth()+1==D.s.m}
 function payDate(y,m,day){let last=new Date(y,m+1,0).getDate();return new Date(y,m,Math.min(day,last))}
