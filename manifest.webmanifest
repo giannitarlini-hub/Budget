@@ -1,0 +1,9 @@
+{
+  "name":"Budget",
+  "short_name":"Budget",
+  "start_url":"./index.html?v=20260918",
+  "display":"standalone",
+  "background_color":"#f5f7fb",
+  "theme_color":"#2563eb",
+  "lang":"it"
+}

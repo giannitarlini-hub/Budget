@@ -1,0 +1,338 @@
+<!doctype html><html lang="it"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1677ff"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="application-name" content="Budget"><link rel="manifest" href="manifest.webmanifest?v=20260918"><title>Budget • Risparmio protetto</title>
+<style>
+:root{--bg:#f3f7fc;--card:#fff;--text:#111827;--muted:#6b7280;--line:#dfe7f1;--accent:#1677ff;--accent2:#7c4dff;--green:#12a36a;--red:#e05252;--yellow:#f2a900}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif}
+.app{max-width:700px;margin:auto;padding:calc(12px + env(safe-area-inset-top)) 16px calc(90px + env(safe-area-inset-bottom))}
+.top{display:flex;justify-content:space-between;align-items:center;padding:10px 2px 16px}.top h1{font-size:29px;margin:0}.top p{margin:3px 0;color:var(--muted);font-size:13px}
+.card{background:var(--card);border-radius:22px;padding:17px;margin:12px 0;box-shadow:0 6px 22px #1677ff12}.hero{background:linear-gradient(135deg,#1677ff 0%,#5b55e8 55%,#7c4dff 100%);color:#fff;box-shadow:0 10px 28px #4d63d633}.hero .muted{color:#e7edff}
+.big{font-size:36px;font-weight:800;letter-spacing:-1px}.muted{color:var(--muted);font-size:13px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric{padding:14px;border:1px solid var(--line);border-radius:17px;background:linear-gradient(180deg,#fff 0%,#f8fbff 100%)}.metric b{display:block;font-size:20px;margin-top:4px}
+h2{font-size:19px;margin:0 0 12px}h3{font-size:15px;margin:0 0 8px}
+button,input,select{font:inherit}button{border:0;border-radius:13px;padding:11px 14px;font-weight:700}.primary{background:var(--accent);color:#fff;box-shadow:0 5px 14px #1677ff33}.light{background:#eaf2ff;color:#1677ff}.danger{background:#fff0f0;color:#c63e3e}
+input,select{width:100%;border:1px solid var(--line);background:#fff;border-radius:13px;padding:12px}label{display:block;font-size:12px;font-weight:700;margin:10px 0 5px}
+.row{display:flex;gap:8px}.row>*{flex:1}.seg{display:flex;background:#eeeef2;border-radius:13px;padding:3px}.seg button{flex:1;background:transparent}.seg .on{background:#fff;box-shadow:0 1px 5px #0001}
+.item{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}.item:last-child{border-bottom:0}
+.amount{font-weight:800;white-space:nowrap}.green{color:var(--green)}.red{color:var(--red)}
+.nav{position:fixed;z-index:10;bottom:0;left:0;right:0;background:#ffffffeb;backdrop-filter:blur(18px);border-top:1px solid #ddd;display:flex;justify-content:center;padding:7px 6px calc(7px + env(safe-area-inset-bottom))}.nav button{background:transparent;color:#777;font-size:11px;padding:7px 12px}.nav button.on{color:var(--accent);font-weight:800}
+.fab{position:fixed;right:18px;bottom:77px;width:56px;height:56px;border-radius:50%;font-size:28px;box-shadow:0 7px 20px #0003;z-index:9}
+.screen{display:none}.screen.on{display:block}.empty{text-align:center;color:var(--muted);padding:20px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:150px;background:#111;color:#fff;padding:10px 15px;border-radius:12px;display:none;z-index:30;font-size:13px}
+
+/* Professional refresh */
+:root{--bg:#f5f7fb;--card:#ffffff;--text:#101828;--muted:#667085;--line:#e4e7ec;--accent:#2563eb;--accent2:#4f46e5;--green:#16a34a;--red:#dc2626;--yellow:#d97706;--shadow:0 8px 28px rgba(16,24,40,.07)}
+body{background:radial-gradient(circle at 50% -10%,#eaf1ff 0,#f5f7fb 35%,#f5f7fb 100%)}
+.app{max-width:720px;padding:calc(14px + env(safe-area-inset-top)) 16px calc(100px + env(safe-area-inset-bottom))}
+.top{padding:8px 2px 18px}.top h1{font-size:32px;letter-spacing:-1.1px}.top p{font-size:13px;font-weight:600}
+.card{border:1px solid rgba(16,24,40,.06);box-shadow:var(--shadow);border-radius:24px;padding:18px;margin:14px 0}
+.hero{background:linear-gradient(135deg,#111827 0%,#1f2937 45%,#344054 100%);box-shadow:0 14px 34px rgba(16,24,40,.18);padding:22px}
+.hero .muted{color:#cbd5e1}.big{font-size:40px;letter-spacing:-1.5px;margin:4px 0 10px}
+.heroGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}.heroMini{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:11px}.heroMini .v{font-size:17px;font-weight:800;margin-top:3px}
+.grid{gap:10px}.metric{border-radius:18px;padding:15px;box-shadow:0 2px 8px rgba(16,24,40,.03)}.metric b{font-size:22px}.metric:first-child{border-color:#bfdbfe;background:#eff6ff}.metric:nth-child(2){border-color:#fecaca;background:#fff5f5}.metric:nth-child(3){border-color:#bbf7d0;background:#f0fdf4}.metric:nth-child(4){border-color:#fde68a;background:#fffbeb}
+h2{font-size:20px;letter-spacing:-.3px}h3{font-size:16px}
+.sectionHead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.sectionHead h2{margin:0}.pill{font-size:11px;font-weight:800;padding:6px 9px;border-radius:999px;background:#eef2ff;color:#4338ca}
+.savings{border:1px solid #dbeafe;background:linear-gradient(180deg,#fff,#f8fbff)}.savingTop{display:flex;justify-content:space-between;align-items:end;gap:10px}.savingValue{font-size:27px;font-weight:850}.progress{height:9px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin:12px 0 8px}.progress>span{display:block;height:100%;background:linear-gradient(90deg,#2563eb,#7c3aed);border-radius:999px}
+button{border-radius:14px}.primary{background:linear-gradient(135deg,#2563eb,#4f46e5);box-shadow:0 7px 16px rgba(37,99,235,.22)}.light{background:#eef4ff;color:#1d4ed8}.danger{background:#fff1f2;color:#be123c}
+.nav{padding:8px 6px calc(8px + env(safe-area-inset-bottom));box-shadow:0 -6px 20px rgba(16,24,40,.06);border-top:1px solid #eaecf0}.nav button{font-size:10.5px;border-radius:12px;min-width:66px}.nav button.on{background:#eef4ff;color:#1d4ed8}
+.fab{width:60px;height:60px;right:18px;bottom:82px;background:#111827!important;box-shadow:0 12px 25px rgba(16,24,40,.25)}
+.item{padding:13px 0}.amount{font-size:15px}
+
+.affordability{border:1px solid #dbeafe;background:linear-gradient(180deg,#fff,#f8fbff)}
+.affordability .row input{flex:1;min-width:0}.affordability .row button{flex:0 0 auto}
+.affordResult{margin-top:12px;padding:12px 13px;border-radius:14px;background:#f2f4f7;font-size:13px;font-weight:700}
+.affordResult.yes{background:#ecfdf3;color:#15803d}.affordResult.no{background:#fff1f2;color:#be123c}.affordResult.warn{background:#fffbeb;color:#a16207}
+.pill.yes{background:#dcfce7;color:#15803d}.pill.no{background:#ffe4e6;color:#be123c}.pill.warn{background:#fef3c7;color:#a16207}
+@media(max-width:380px){.heroGrid{grid-template-columns:1fr}.big{font-size:36px}}
+</style>
+<style>
+.afford-sim{margin-top:12px;padding:14px;border-radius:16px;background:#f5f7fb;border:1px solid #e5e9f2}
+.afford-sim .sim-title{font-weight:700;font-size:14px;margin-bottom:8px}
+.afford-sim .sim-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.afford-sim .sim-box{background:white;border-radius:12px;padding:10px}
+.afford-sim .sim-label{font-size:11px;color:#687386}
+.afford-sim .sim-value{font-size:18px;font-weight:800;margin-top:3px}
+</style>
+
+<style>
+.afford-sim .sim-change{margin-top:9px;font-size:12px;color:#687386;font-weight:600}
+</style>
+</head><body><main class="app">
+<div class="top"><div><h1>Budget</h1><p id="period"></p></div><button class="light" onclick="go('settings')">⚙︎</button></div>
+
+<section id="home" class="screen on">
+<div class="card hero"><div class="muted">Disponibilità reale</div><div class="big" id="balance"></div><p class="muted" id="heroSub"></p><div class="heroGrid"><div class="heroMini"><div class="muted">Budget per spese</div><div class="v" id="spendablePool"></div></div><div class="heroMini"><div class="muted">Fine ciclo</div><div class="v" id="cycleEndLabel"></div></div></div></div>
+<div class="grid">
+<div class="metric"><div class="muted">Spendibile oggi</div><b id="daily"></b></div>
+<div class="metric"><div class="muted">Spese mese</div><b id="spent"></b></div>
+<div class="metric"><div class="muted">Entrate mese</div><b id="income"></b></div>
+<div class="metric"><div class="muted">Da pagare</div><b id="committed"></b></div>
+</div>
+<div class="card affordability">
+  <div class="sectionHead"><h2>Posso permettermelo?</h2><span class="pill" id="affordPill">CHECK</span></div>
+  <div class="muted" style="margin-bottom:10px">Inserisci l'importo e controlla subito se rientra nel budget di oggi.</div>
+  <div class="row">
+    <input id="affordAmount" type="number" min="0" step=".01" inputmode="decimal" placeholder="Es. 35,00 €" oninput="checkAffordability()">
+    <button class="primary" onclick="checkAffordability(true)">Verifica</button>
+  </div>
+  <div id="affordResult" class="affordResult muted">Inserisci un importo per fare il controllo.</div>
+</div>
+<div class="card savings"><div class="sectionHead"><h2>Risparmio protetto</h2><span class="pill">AUTOMATICO</span></div><div class="savingTop"><div><div class="muted">Protetto cumulativo</div><div class="savingValue" id="savedAccum"></div></div><div style="text-align:right"><div class="muted">+ ogni ciclo</div><b id="savingTarget"></b></div></div><div class="progress"><span id="savingBar" style="width:100%"></span></div><div class="muted" id="savingNote"></div></div>
+<div class="card"><h2>Prossime uscite</h2><div id="next"></div></div>
+<div class="card"><h2>Ultimi movimenti</h2><div id="recent"></div></div>
+</section>
+
+<section id="add" class="screen"><div class="card"><h2>Nuovo movimento</h2>
+<div class="seg"><button id="spesa" class="on" onclick="setType('Spesa')">Spesa</button><button id="entrata" onclick="setType('Entrata')">Entrata</button></div>
+<label>Data</label><input id="md" type="date"><label>Categoria</label><select id="mc"></select><label>Descrizione</label><input id="mx" placeholder="Es. Benzina"><label>Importo</label><input id="ma" type="number" min="0" step=".01" inputmode="decimal"><button class="primary" style="width:100%;margin-top:13px" onclick="addMove()">Salva movimento</button>
+</div></section>
+
+<section id="list" class="screen"><div class="card"><h2>Movimenti</h2><div id="allMoves"></div></div></section>
+
+<section id="future" class="screen"><div class="card"><h2>Uscite future</h2>
+<label>Data</label><input id="fd" type="date"><label>Descrizione</label><input id="fx" placeholder="Es. Carta di credito"><label>Categoria</label><select id="fc"></select><label>Importo</label><input id="fa" type="number" min="0" step=".01" inputmode="decimal"><button class="primary" style="width:100%;margin-top:13px" onclick="addFuture()">Aggiungi uscita</button></div>
+<div class="card"><div id="allFuture"></div></div></section>
+
+<section id="settings" class="screen"><div class="card"><h2>Impostazioni</h2>
+<div class="grid"><div><label>Anno</label><input id="sy" type="number"></div><div><label>Mese</label><select id="sm"></select></div></div>
+<label>Saldo iniziale</label><input id="si" type="number" step=".01"><label>Obiettivo risparmio</label><input id="st" type="number" step=".01"><label>Giorno di riscossione / fine budget</label><select id="pd"></select><div class="muted" style="margin-top:6px">Il budget giornaliero viene calcolato fino al prossimo giorno di riscossione. Ognuno può impostare il proprio giorno.</div><button class="primary" style="width:100%;margin-top:13px" onclick="saveSettings()">Salva</button></div>
+<div class="card"><h2>Backup</h2><div class="row"><button class="light" onclick="exportData()">Esporta</button><button class="light" onclick="document.getElementById('imp').click()">Importa</button></div><input id="imp" type="file" accept=".json" style="display:none" onchange="importData(event)"></div>
+<div class="card"><button class="danger" style="width:100%" onclick="resetData()">Cancella dati</button></div></section>
+</main>
+
+<button class="primary fab" onclick="go('add')">＋</button>
+<nav class="nav">
+<button id="nh" class="on" onclick="go('home');return false">⌂<br>Home</button>
+<button id="nl" onclick="go('list');return false">☷<br>Movimenti</button>
+<button id="nf" onclick="go('future');return false">◷<br>Uscite</button>
+<button id="ns" onclick="go('settings');return false">⚙<br>Impostazioni</button>
+</nav><div id="toast" class="toast"></div>
+
+<script>
+const cats=["Alimentari","Benzina","Casa","Auto","Bollette","Affitto","Finanziamento","Tempo libero","Ristoranti","Shopping","Salute","Trasporti","Stipendio","Rimborso","Altro"];
+const fcats=["Casa","Auto","Finanze","Bollette","Abbonamenti","Tasse","Shopping","Altro"];
+const today=new Date();const key="budgetAppV2";
+let D=JSON.parse(localStorage.getItem(key)||"null")||{s:{y:today.getFullYear(),m:today.getMonth()+1,i:1388,t:0,payDay:10},moves:[],future:[{id:id(),date:"2026-10-05",desc:"Carta di credito",cat:"Finanze",amount:839,paid:false}]};
+if(!D.s.payDay)D.s.payDay=10;
+if(!Array.isArray(D.s.savingsHistory))D.s.savingsHistory=[];
+if(typeof D.s.saved!=="number")D.s.saved=0;
+let type="Spesa";
+function id(){return Date.now().toString(36)+Math.random().toString(36).slice(2)}
+function save(){localStorage.setItem(key,JSON.stringify(D));render()}
+function euro(n){return new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR"}).format(n||0)}
+function iso(d){return d.toISOString().slice(0,10)}
+function dt(s){let [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)}
+function inMonth(s){let d=dt(s);return d.getFullYear()==D.s.y&&d.getMonth()+1==D.s.m}
+function payDate(y,m,day){
+ let last=new Date(y,m+1,0).getDate();
+ return new Date(y,m,Math.min(day,last));
+}
+function cycleEndDate(){
+ let day=Math.min(31,Math.max(1,Number(D.s.payDay)||10));
+ let y=today.getFullYear(),m=today.getMonth();
+ let current=payDate(y,m,day);
+ if(today>=current)m++;
+ return payDate(y,m,day);
+}
+function cycleStartDate(){
+ let day=Math.min(31,Math.max(1,Number(D.s.payDay)||10));
+ let end=cycleEndDate();
+ let prev=payDate(end.getFullYear(),end.getMonth()-1,day);
+ prev.setDate(prev.getDate()+1);
+ return prev;
+}
+function inCycle(s){let d=dt(s),start=cycleStartDate(),end=cycleEndDate();return d>=start&&d<=end}
+
+function currentCycleKey(){
+ let start=cycleStartDate(); return iso(start);
+}
+function getAutoSavings(){
+ const target=Math.max(0,Number(D.s.t)||0);
+ const KEY='budget_auto_savings_v2';
+ const k=currentCycleKey();
+ let st=null;
+ try{st=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){st=null}
+ if(!st || typeof st.saved!=='number' || !st.lastCycle){
+   // Primo avvio: il primo ciclo protegge automaticamente l'obiettivo.
+   st={saved:target,lastCycle:k};
+ }else if(st.lastCycle!==k){
+   const a=dt(st.lastCycle), b=dt(k);
+   let months=(b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth());
+   months=Math.max(1,months);
+   st.saved += target*months;
+   st.lastCycle=k;
+ }
+ localStorage.setItem(KEY,JSON.stringify(st));
+ return Math.max(0,st.saved);
+}
+
+function resetAutoSavings(){
+ try{localStorage.removeItem('budget_auto_savings_v2')}catch(e){}
+}
+
+function calc(){
+ let m=D.moves.filter(x=>inCycle(x.date)), inc=m.filter(x=>x.type==="Entrata").reduce((a,x)=>a+x.amount,0), sp=m.filter(x=>x.type==="Spesa").reduce((a,x)=>a+x.amount,0);
+ let paid=D.future.filter(x=>x.paid&&inCycle(x.date)).reduce((a,x)=>a+x.amount,0);
+ let bal=D.s.i+inc-sp-paid, todayIso=iso(new Date()), endIso=iso(cycleEndDate());
+ let commitments=D.future.filter(x=>!x.paid&&x.date>=todayIso&&x.date<=endIso).reduce((a,x)=>a+x.amount,0);
+ let todaySpent=m.filter(x=>x.type==="Spesa"&&x.date===todayIso).reduce((a,x)=>a+x.amount,0);
+ let protectedSavings=getAutoSavings();
+ let remain=Math.max(1,Math.round((cycleEndDate()-new Date(today.getFullYear(),today.getMonth(),today.getDate()))/86400000)+1);
+ // BUDGET REALE SPENDIBILE: saldo reale - impegni futuri - risparmio protetto cumulativo.
+ // Il risparmio e' virtuale: resta sul conto, ma non puo' essere speso.
+ // La quota di oggi viene calcolata sul budget disponibile all'inizio della giornata;
+ // le spese gia' fatte oggi vengono sottratte 1:1, senza ricalcolare la quota di oggi.
+ let balanceBeforeToday=bal+todaySpent;
+ // UNICA BASE DI CALCOLO: il risparmio protetto e gli impegni futuri
+ // vengono sottratti prima di calcolare sia il budget del ciclo sia la quota giornaliera.
+ let spendableBeforeToday=Math.max(0,balanceBeforeToday-commitments-protectedSavings);
+ let dailyQuota=spendableBeforeToday/remain;
+ let daily=Math.max(0,dailyQuota-todaySpent);
+ return {inc,sp,paid,bal,commitments,daily,remain,endIso,todaySpent,protectedSavings,spendablePool:Math.max(0,bal-commitments-protectedSavings)}
+}
+function render(){
+ document.getElementById("period").textContent=`Ciclo ${String(D.s.payDay).padStart(2,"0")} → ${String(D.s.payDay).padStart(2,"0")}`;
+ let c=calc();
+ ["balance","daily","spent","income","committed"].forEach((x,i)=>document.getElementById(x).textContent=euro([c.bal,c.daily,c.sp+c.paid,c.inc,c.commitments][i]));
+ const pool=Number(c.spendablePool)||0;
+ document.getElementById("spendablePool").textContent=euro(pool);
+ document.getElementById("cycleEndLabel").textContent=new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"2-digit"}).format(cycleEndDate());
+ document.getElementById("heroSub").textContent=`Risparmio programmato ${euro(D.s.t)} · Impegni futuri ${euro(c.commitments)} · Budget fino al ${String(c.endIso.slice(8,10)).padStart(2,"0")}/${String(c.endIso.slice(5,7)).padStart(2,"0")}`;
+ const saved=getAutoSavings(), target=Number(D.s.t||0);
+ document.getElementById("savedAccum").textContent=euro(saved);
+ document.getElementById("savingTarget").textContent=euro(target);
+ const pct=target>0?Math.min(100,100):0;
+ document.getElementById("savingBar").style.width=pct+"%";
+ document.getElementById("savingNote").innerHTML=target?`<b>Risparmio protetto: ${euro(saved)}</b><br>Ogni ciclo aggiunge automaticamente ${euro(target)}. I soldi restano sul conto, ma non sono considerati spendibili.`:`Imposta un obiettivo per iniziare a proteggere il risparmio.`;
+ const btn=document.getElementById("confirmSavingBtn"); if(btn) btn.style.display="none";
+ let next=[...D.future].filter(x=>!x.paid&&x.date>=iso(new Date())).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,5);
+ document.getElementById("next").innerHTML=next.length?next.map(x=>itemFuture(x,false)).join(""):'<div class="empty">Nessuna uscita imminente</div>';
+ let rec=[...D.moves].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);document.getElementById("recent").innerHTML=rec.length?rec.map(itemMove).join(""):'<div class="empty">Nessun movimento</div>';
+ let all=[...D.moves.filter(x=>inMonth(x.date))].sort((a,b)=>b.date.localeCompare(a.date));document.getElementById("allMoves").innerHTML=all.length?all.map(itemMove).join(""):'<div class="empty">Nessun movimento nel mese</div>';
+ let fut=[...D.future].sort((a,b)=>a.date.localeCompare(b.date));document.getElementById("allFuture").innerHTML=fut.length?fut.map(x=>itemFuture(x,true)).join(""):'<div class="empty">Nessuna uscita</div>';
+}
+
+function checkAffordability(showToast){
+ const input=document.getElementById("affordAmount"), result=document.getElementById("affordResult"), pill=document.getElementById("affordPill");
+ const amount=Number(input.value);
+ result.className="affordResult muted"; pill.className="pill"; pill.textContent="CHECK";
+ const oldSim=document.getElementById("affordSimulation"); if(oldSim) oldSim.remove();
+ if(!(amount>0)){result.textContent="Inserisci un importo per fare il controllo.";return false}
+ const c=calc();
+ const leftToday=c.daily-amount;
+ const pool=Number(c.spendablePool)||0;
+ const daysAfter=Math.max(0,c.remain-1);
+ const futureDaily=daysAfter>0 ? Math.max(0,(pool-amount)/daysAfter) : Math.max(0,pool-amount);
+
+ // Build the simulation directly inside the affordability card.
+ const sim=document.createElement("div");
+ sim.id="affordSimulation";
+ sim.className="afford-sim";
+ const todayLeft=Math.max(0,leftToday);
+ const change=futureDaily-c.daily;
+ sim.innerHTML =
+   '<div class="sim-title">Se fai questa spesa</div>'+
+   '<div class="sim-grid">'+
+   '<div class="sim-box"><div class="sim-label">Oggi ti rimangono</div><div class="sim-value">'+euro(todayLeft)+'</div></div>'+
+   '<div class="sim-box"><div class="sim-label">Da domani avresti</div><div class="sim-value">'+euro(futureDaily)+'/giorno</div></div>'+
+   '</div>'+
+   '<div class="sim-change">'+(change>=-0.005 ? 'Il budget giornaliero non diminuisce.' : 'Da domani: '+euro(Math.abs(change))+' in meno al giorno.')+'</div>';
+ result.insertAdjacentElement("afterend",sim);
+
+ if(leftToday>=-0.005){
+   result.className="affordResult yes"; pill.className="pill yes"; pill.textContent="SÌ";
+   result.textContent=`Sì. La spesa rientra nello spendibile di oggi.`;
+   if(showToast)toast("Sì, rientra nel budget di oggi");
+   return true;
+ }
+ const shortage=amount-c.daily;
+ if(amount<=pool){
+   result.className="affordResult warn"; pill.className="pill warn"; pill.textContent="ATTENZIONE";
+   result.textContent=`Oggi no: supereresti lo spendibile di ${euro(shortage)}, ma la spesa rientra nel budget del ciclo.`;
+   if(showToast)toast("Attenzione: supera il budget di oggi");
+   return false;
+ }
+ result.className="affordResult no"; pill.className="pill no"; pill.textContent="NO";
+ result.textContent=`No. La spesa supera anche il budget disponibile del ciclo di ${euro(amount-pool)}.`;
+ if(showToast)toast("No, non rientra nel budget");
+ return false;
+}
+function itemMove(x){return `<div class="item"><div><b>${x.desc||x.cat}</b><div class="muted">${x.date} · ${x.cat}</div></div><div style="text-align:right"><div class="amount ${x.type==="Spesa"?"red":"green"}">${x.type==="Spesa"?"−":"+"}${euro(x.amount)}</div><button class="danger" style="margin-top:5px;padding:5px 8px;font-size:11px" onclick="delMove('${x.id}')">Elimina</button></div></div>`}
+function itemFuture(x,del){return `<div class="item"><div><b>${x.desc}</b><div class="muted">${x.date} · ${x.cat} · ${x.paid?"Pagato":"Da pagare"}</div></div><div style="text-align:right"><div class="amount">${euro(x.amount)}</div><button class="${x.paid?"light":"primary"}" style="margin-top:5px;padding:5px 8px;font-size:11px" onclick="togglePaid('${x.id}')">${x.paid?"Segna da pagare":"Segna pagato"}</button>${del?` <button class="danger" style="padding:5px 8px;font-size:11px" onclick="delFuture('${x.id}')">×</button>`:""}</div></div>`}
+function setType(t){type=t;document.getElementById("spesa").classList.toggle("on",t==="Spesa");document.getElementById("entrata").classList.toggle("on",t==="Entrata")}
+function addMove(){let a=Number(document.getElementById("ma").value),d=document.getElementById("md").value;if(!d||!(a>0))return toast("Inserisci data e importo");D.moves.push({id:id(),date:d,type,cat:document.getElementById("mc").value,desc:document.getElementById("mx").value.trim(),amount:a});document.getElementById("ma").value="";document.getElementById("mx").value="";save();toast("Movimento salvato");go("home")}
+function addFuture(){let a=Number(document.getElementById("fa").value),d=document.getElementById("fd").value;if(!d||!(a>0))return toast("Inserisci data e importo");D.future.push({id:id(),date:d,desc:document.getElementById("fx").value.trim()||"Uscita",cat:document.getElementById("fc").value,amount:a,paid:false});document.getElementById("fa").value="";document.getElementById("fx").value="";save();toast("Uscita aggiunta")}
+function delMove(i){if(confirm("Eliminare il movimento?")){D.moves=D.moves.filter(x=>x.id!==i);save()}}
+function delFuture(i){if(confirm("Eliminare l'uscita?")){D.future=D.future.filter(x=>x.id!==i);save()}}
+function togglePaid(i){let x=D.future.find(x=>x.id===i);if(x){x.paid=!x.paid;save()}}
+function saveSettings(){D.s.y=Number(document.getElementById("sy").value);D.s.m=Number(document.getElementById("sm").value);D.s.i=Number(document.getElementById("si").value)||0;D.s.t=Number(document.getElementById("st").value)||0;D.s.payDay=Number(document.getElementById("pd").value)||10;save();toast("Impostazioni salvate");go("home")}
+function go(idn){
+ document.querySelectorAll(".screen").forEach(x=>x.classList.remove("on"));
+ const target=document.getElementById(idn);
+ if(!target)return;
+ target.classList.add("on");
+ document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("on"));
+ const map={home:"nh",list:"nl",future:"nf",settings:"ns"};
+ if(map[idn])document.getElementById(map[idn]).classList.add("on");
+ window.scrollTo(0,0);
+}
+function toast(t){let x=document.getElementById("toast");x.textContent=t;x.style.display="block";setTimeout(()=>x.style.display="none",1800)}
+function exportData(){let b=new Blob([JSON.stringify(D,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="budget-backup.json";a.click()}
+function importData(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!x.s||!Array.isArray(x.moves)||!Array.isArray(x.future))throw 0;D=x;save();toast("Backup importato")}catch(_){toast("Backup non valido")}};r.readAsText(f)}
+function resetData(){if(confirm("Cancello tutti i dati?")){localStorage.removeItem(key);location.reload()}}
+function fill(){document.getElementById("mc").innerHTML=cats.map(x=>`<option>${x}</option>`).join("");document.getElementById("fc").innerHTML=fcats.map(x=>`<option>${x}</option>`).join("");let ms=["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];document.getElementById("sm").innerHTML=ms.map((x,i)=>`<option value="${i+1}">${x}</option>`).join("");document.getElementById("sy").value=D.s.y;document.getElementById("sm").value=D.s.m;document.getElementById("si").value=D.s.i;document.getElementById("st").value=D.s.t;document.getElementById("pd").value=D.s.payDay||10;document.getElementById("md").value=iso(new Date());document.getElementById("fd").value=iso(new Date())}
+document.getElementById("pd").innerHTML=Array.from({length:31},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join("");
+fill();
+render();
+
+function updateAffordabilitySimulation(amount){
+  try{
+    amount = Number(amount)||0;
+    const currentDaily = typeof calc === 'function' ? Number((calc().daily)||0) : 0;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const end = (typeof cycleEnd === 'function') ? cycleEnd(today) : new Date(today.getFullYear(),today.getMonth(),10);
+    const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate()+1);
+    const msDay=86400000;
+    let daysAfter=Math.max(1,Math.ceil((end-tomorrow)/msDay)+1);
+
+    // Current cycle spending pool, based on the app's current calculation where possible.
+    let remainingCycle = null;
+    if(typeof calc === 'function'){
+      const c=calc();
+      if(c && Number.isFinite(Number(c.available))) remainingCycle=Number(c.available);
+      else if(c && Number.isFinite(Number(c.rem))) remainingCycle=Number(c.rem);
+    }
+    if(remainingCycle===null){
+      const balance = Number((D&&D.s&&D.s.balance)||0);
+      const target = Number((D&&D.s&&D.s.t)||0);
+      remainingCycle = balance - target;
+    }
+
+    // Remove today's already-recorded spending only once; the app's cycle pool
+    // should represent money remaining for the cycle at this moment.
+    const afterPurchase = remainingCycle - amount;
+    const futureDaily = afterPurchase / daysAfter;
+    const todayAfter = currentDaily - amount;
+
+    let box=document.getElementById('affordSimulation');
+    if(!box){
+      box=document.createElement('div');
+      box.id='affordSimulation';
+      box.className='afford-sim';
+      const anchor=document.querySelector('[id*="afford"], [class*="afford"], body');
+      (anchor||document.body).appendChild(box);
+    }
+    box.innerHTML =
+      '<div class="sim-title">Se faccio questa spesa...</div>'+
+      '<div class="sim-grid">'+
+      '<div class="sim-box"><div class="sim-label">Oggi rimarrebbero</div><div class="sim-value">'+
+      Math.max(0,todayAfter).toFixed(2).replace('.',',')+' €</div></div>'+
+      '<div class="sim-box"><div class="sim-label">Da domani avrei</div><div class="sim-value">'+
+      Math.max(0,futureDaily).toFixed(2).replace('.',',')+' €/giorno</div></div>'+
+      '</div>';
+  }catch(e){}
+}
+
+</script>
+</body></html>
