@@ -147,7 +147,7 @@ const cats=["Alimentari","Benzina","Casa","Auto","Bollette","Affitto","Finanziam
 const fcats=["Casa","Auto","Finanze","Bollette","Abbonamenti","Tasse","Shopping","Altro"];
 const today=new Date();
 const key="budgetAppV2";
-const savingsKey="budget_auto_savings_v4";
+const savingsKey="budget_auto_savings_v3";
 const DEFAULT_SAVINGS=200;
 // Regola fissa dell'app: accantonamento automatico di 200 € per ogni ciclo/mese.
 
@@ -199,20 +199,24 @@ function currentCycleKey(){return iso(cycleStartDate())}
      il nuovo valore predefinito di 200 € viene applicato al primo caricamento.
 */
 function getAutoSavings(){
- const target=DEFAULT_SAVINGS;
+ const target=Math.max(0,Number(D.s.t)||0);
  const k=currentCycleKey();
  let st=null;
  try{st=JSON.parse(localStorage.getItem(savingsKey)||"null")}catch(e){}
- // Versione definitiva: parte da 200 € nel ciclo attuale,
- // poi aggiunge esattamente 200 € a ogni nuovo ciclo.
  if(!st || typeof st.saved!=="number" || !st.lastCycle){
    st={saved:target,lastCycle:k};
- }else if(st.lastCycle!==k){
-   const a=dt(st.lastCycle),b=dt(k);
-   let months=(b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth());
-   months=Math.max(1,months);
-   st.saved+=target*months;
-   st.lastCycle=k;
+ }else{
+   if(st.saved<=0 && target>0 && st.migrated!==true){
+     st.saved=target;
+     st.migrated=true;
+   }
+   if(st.lastCycle!==k){
+     const a=dt(st.lastCycle),b=dt(k);
+     let months=(b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth());
+     months=Math.max(1,months);
+     st.saved+=target*months;
+     st.lastCycle=k;
+   }
  }
  localStorage.setItem(savingsKey,JSON.stringify(st));
  return Math.max(0,st.saved);
