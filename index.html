@@ -1,41 +1,397 @@
 <!doctype html>
-<html lang="it"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#111827"><title>Store Manager</title>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1677ff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="application-name" content="Budget">
+<link rel="manifest" href="manifest.webmanifest?v=20260918-2">
+<title>Budget • Risparmio protetto</title>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f4f6fa;color:#18202f}
-.app{max-width:480px;margin:auto;min-height:100vh;padding-bottom:85px}header{background:#111827;color:#fff;padding:18px;border-radius:0 0 24px 24px}
-.brand{font-size:12px;opacity:.65}.title{font-size:27px;font-weight:800}.role{float:right;margin-top:-30px;background:#ffffff18;border:1px solid #ffffff22;padding:7px 10px;border-radius:12px;font-size:12px}
-main{padding:16px}.card{background:#fff;border-radius:20px;padding:16px;margin-bottom:12px;box-shadow:0 3px 14px #18202f0b}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.metric{background:#f7f8fb;padding:14px;border-radius:16px}.metric b{display:block;font-size:23px}.muted{color:#737d8d;font-size:13px}.section{font-size:18px;font-weight:800;margin:20px 2px 10px}
-.row{display:flex;justify-content:space-between;align-items:center;gap:10px}.pill{padding:6px 9px;border-radius:10px;font-size:12px;font-weight:700;background:#eef2ff;color:#4054c5}.green{background:#e9f8ef;color:#177245}.yellow{background:#fff5dc;color:#9a6a00}.red{background:#ffe9eb;color:#b42332}
-.person,.task{display:flex;align-items:center;gap:11px;padding:12px 0;border-bottom:1px solid #eee}.person:last-child,.task:last-child{border:0}.avatar{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:#e9edff;font-weight:800;color:#4054c5}.task{justify-content:space-between}.btn{padding:11px 13px;border-radius:13px;background:#111827;color:#fff;font-weight:700}.btn.light{background:#eef1f6;color:#202838}.btn.green{background:#159447}.btn.red{background:#d73a49}
-.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);max-width:480px;width:100%;height:76px;background:#fff;border-top:1px solid #e7eaf0;display:flex;justify-content:space-around;padding-top:8px;z-index:5}
-.nav button{background:none;color:#7a8494;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:4px}.nav button.active{color:#4054c5;font-weight:800}.icon{font-size:21px}
-</style></head><body><div class="app"><header><div class="brand">STORE MANAGER</div><div class="title">Gestione Personale</div><div class="role" onclick="switchRole()" id="role">Store Manager</div></header><main id="content"></main><nav class="nav" id="nav"></nav></div>
+:root{--bg:#f5f7fb;--card:#fff;--text:#101828;--muted:#667085;--line:#e4e7ec;--accent:#2563eb;--accent2:#4f46e5;--green:#16a34a;--red:#dc2626;--yellow:#d97706;--shadow:0 8px 28px rgba(16,24,40,.07)}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 50% -10%,#eaf1ff 0,#f5f7fb 35%,#f5f7fb 100%);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif}
+.app{max-width:720px;margin:auto;padding:calc(14px + env(safe-area-inset-top)) 16px calc(100px + env(safe-area-inset-bottom))}
+.top{display:flex;justify-content:space-between;align-items:center;padding:8px 2px 18px}
+.top h1{font-size:32px;letter-spacing:-1.1px;margin:0}
+.top p{margin:3px 0;color:var(--muted);font-size:13px;font-weight:600}
+.card{background:var(--card);border:1px solid rgba(16,24,40,.06);box-shadow:var(--shadow);border-radius:24px;padding:18px;margin:14px 0}
+.hero{background:linear-gradient(135deg,#111827 0%,#1f2937 45%,#344054 100%);color:#fff;box-shadow:0 14px 34px rgba(16,24,40,.18);padding:22px}
+.hero .muted{color:#cbd5e1}
+.big{font-size:40px;font-weight:800;letter-spacing:-1.5px;margin:4px 0 10px}
+.muted{color:var(--muted);font-size:13px}
+.heroGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.heroMini{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:11px}
+.heroMini .v{font-size:17px;font-weight:800;margin-top:3px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.metric{padding:15px;border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:0 2px 8px rgba(16,24,40,.03)}
+.metric b{display:block;font-size:22px;margin-top:4px}
+.metric:nth-child(1){border-color:#bfdbfe;background:#eff6ff}
+.metric:nth-child(2){border-color:#fecaca;background:#fff5f5}
+.metric:nth-child(3){border-color:#bbf7d0;background:#f0fdf4}
+.metric:nth-child(4){border-color:#fde68a;background:#fffbeb}
+h2{font-size:20px;letter-spacing:-.3px;margin:0 0 12px}
+label{display:block;font-size:12px;font-weight:700;margin:10px 0 5px}
+button,input,select{font:inherit}
+button{border:0;border-radius:14px;padding:11px 14px;font-weight:700}
+.primary{background:linear-gradient(135deg,#2563eb,#4f46e5);color:#fff;box-shadow:0 7px 16px rgba(37,99,235,.22)}
+.light{background:#eef4ff;color:#1d4ed8}
+.danger{background:#fff1f2;color:#be123c}
+input,select{width:100%;border:1px solid var(--line);background:#fff;border-radius:13px;padding:12px}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.seg{display:flex;background:#eeeef2;border-radius:13px;padding:3px}.seg button{flex:1;background:transparent}.seg .on{background:#fff;box-shadow:0 1px 5px #0001}
+.item{display:flex;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}.amount{font-weight:800;white-space:nowrap;font-size:15px}.green{color:var(--green)}.red{color:var(--red)}
+.screen{display:none}.screen.on{display:block}.empty{text-align:center;color:var(--muted);padding:20px}
+.nav{position:fixed;z-index:10;bottom:0;left:0;right:0;background:#ffffffeb;backdrop-filter:blur(18px);border-top:1px solid #eaecf0;box-shadow:0 -6px 20px rgba(16,24,40,.06);display:flex;justify-content:center;padding:8px 6px calc(8px + env(safe-area-inset-bottom))}
+.nav button{background:transparent;color:#777;font-size:10.5px;border-radius:12px;min-width:66px;padding:7px 12px}
+.nav button.on{background:#eef4ff;color:#1d4ed8;font-weight:800}
+.fab{position:fixed;right:18px;bottom:82px;width:60px;height:60px;border-radius:50%;font-size:28px;background:#111827!important;color:#fff;box-shadow:0 12px 25px rgba(16,24,40,.25);z-index:9}
+.affordability{border:1px solid #dbeafe;background:linear-gradient(180deg,#fff,#f8fbff)}
+.sectionHead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.sectionHead h2{margin:0}.pill{font-size:11px;font-weight:800;padding:6px 9px;border-radius:999px;background:#eef2ff;color:#4338ca}
+.pill.yes{background:#dcfce7;color:#15803d}.pill.no{background:#ffe4e6;color:#be123c}.pill.warn{background:#fef3c7;color:#a16207}
+.affordResult{margin-top:12px;padding:12px 13px;border-radius:14px;background:#f2f4f7;font-size:13px;font-weight:700}
+.affordResult.yes{background:#ecfdf3;color:#15803d}.affordResult.no{background:#fff1f2;color:#be123c}.affordResult.warn{background:#fffbeb;color:#a16207}
+.afford-sim{margin-top:12px;padding:14px;border-radius:16px;background:#f5f7fb;border:1px solid #e5e9f2}
+.sim-title{font-weight:700;font-size:14px;margin-bottom:8px}.sim-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sim-box{background:white;border-radius:12px;padding:10px}.sim-label{font-size:11px;color:#687386}.sim-value{font-size:18px;font-weight:800;margin-top:3px}
+.savings{border:1px solid #dbeafe;background:linear-gradient(180deg,#fff,#f8fbff)}
+.savingTop{display:flex;justify-content:space-between;align-items:end;gap:10px}.savingValue{font-size:27px;font-weight:850}
+.progress{height:9px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin:12px 0 8px}
+.progress>span{display:block;height:100%;background:linear-gradient(90deg,#2563eb,#7c3aed);border-radius:999px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:150px;background:#111;color:#fff;padding:10px 15px;border-radius:12px;display:none;z-index:30;font-size:13px}
+@media(max-width:380px){.heroGrid{grid-template-columns:1fr}.big{font-size:36px}}
+</style>
+</head>
+<body>
+<main class="app">
+<div class="top"><div><h1>Budget</h1><p id="period"></p></div><button class="light" onclick="go('settings')">⚙︎</button></div>
+
+<section id="home" class="screen on">
+<div class="card hero">
+<div class="muted">Disponibilità reale</div><div class="big" id="balance"></div><p class="muted" id="heroSub"></p>
+<div class="heroGrid">
+<div class="heroMini"><div class="muted">Budget per spese</div><div class="v" id="spendablePool"></div></div>
+<div class="heroMini"><div class="muted">Fine ciclo</div><div class="v" id="cycleEndLabel"></div></div>
+</div></div>
+
+<div class="grid">
+<div class="metric"><div class="muted">Spendibile oggi</div><b id="daily"></b></div>
+<div class="metric"><div class="muted">Spese mese</div><b id="spent"></b></div>
+<div class="metric"><div class="muted">Entrate mese</div><b id="income"></b></div>
+<div class="metric"><div class="muted">Da pagare</div><b id="committed"></b></div>
+</div>
+
+<div class="card affordability">
+<div class="sectionHead"><h2>Posso permettermelo?</h2><span class="pill" id="affordPill">CHECK</span></div>
+<div class="muted" style="margin-bottom:10px">Inserisci l'importo senza registrare la spesa.</div>
+<div class="row"><input id="affordAmount" type="number" min="0" step=".01" inputmode="decimal" placeholder="Es. 35,00 €" oninput="checkAffordability()"><button class="primary" onclick="checkAffordability(true)">Verifica</button></div>
+<div id="affordResult" class="affordResult muted">Inserisci un importo per fare il controllo.</div>
+</div>
+
+<div class="card savings">
+<div class="sectionHead"><h2>Risparmio protetto</h2><span class="pill">AUTOMATICO</span></div>
+<div class="savingTop">
+<div><div class="muted">Protetto cumulativo</div><div class="savingValue" id="savedAccum"></div></div>
+<div style="text-align:right"><div class="muted">+ ogni ciclo</div><b id="savingTarget"></b></div>
+</div>
+<div class="progress"><span id="savingBar"></span></div>
+<div class="muted" id="savingNote"></div>
+</div>
+
+<div class="card"><h2>Prossime uscite</h2><div id="next"></div></div>
+<div class="card"><h2>Ultimi movimenti</h2><div id="recent"></div></div>
+</section>
+
+<section id="add" class="screen"><div class="card"><h2>Nuovo movimento</h2>
+<div class="seg"><button id="spesa" class="on" onclick="setType('Spesa')">Spesa</button><button id="entrata" onclick="setType('Entrata')">Entrata</button></div>
+<label>Data</label><input id="md" type="date"><label>Categoria</label><select id="mc"></select><label>Descrizione</label><input id="mx" placeholder="Es. Benzina"><label>Importo</label><input id="ma" type="number" min="0" step=".01" inputmode="decimal">
+<button class="primary" style="width:100%;margin-top:13px" onclick="addMove()">Salva movimento</button>
+</div></section>
+
+<section id="list" class="screen"><div class="card"><h2>Movimenti</h2><div id="allMoves"></div></div></section>
+
+<section id="future" class="screen"><div class="card"><h2>Uscite future</h2>
+<label>Data</label><input id="fd" type="date"><label>Descrizione</label><input id="fx" placeholder="Es. Carta di credito"><label>Categoria</label><select id="fc"></select><label>Importo</label><input id="fa" type="number" min="0" step=".01" inputmode="decimal">
+<button class="primary" style="width:100%;margin-top:13px" onclick="addFuture()">Aggiungi uscita</button></div>
+<div class="card"><div id="allFuture"></div></div></section>
+
+<section id="settings" class="screen"><div class="card"><h2>Impostazioni</h2>
+<div class="grid"><div><label>Anno</label><input id="sy" type="number"></div><div><label>Mese</label><select id="sm"></select></div></div>
+<label>Saldo iniziale</label><input id="si" type="number" step=".01">
+<label>Risparmio automatico per ciclo</label><input id="st" type="number" step=".01">
+<div class="muted" style="margin-top:6px">Fisso: 200 € per ogni ciclo/mese. Il risparmio è virtualmente protetto: resta sul conto ma non viene considerato spendibile.</div>
+<label>Giorno di riscossione / fine budget</label><select id="pd"></select>
+<div class="muted" style="margin-top:6px">Il ciclo va dal giorno successivo alla riscossione precedente fino al prossimo giorno di riscossione.</div>
+<button class="primary" style="width:100%;margin-top:13px" onclick="saveSettings()">Salva</button>
+</div>
+<div class="card"><h2>Backup</h2><div class="row"><button class="light" onclick="exportData()">Esporta</button><button class="light" onclick="document.getElementById('imp').click()">Importa</button></div><input id="imp" type="file" accept=".json" style="display:none" onchange="importData(event)"></div>
+<div class="card"><button class="danger" style="width:100%" onclick="resetData()">Cancella dati</button></div>
+</section>
+</main>
+
+<button class="primary fab" onclick="go('add')">＋</button>
+<nav class="nav">
+<button id="nh" class="on" onclick="go('home');return false">⌂<br>Home</button>
+<button id="nl" onclick="go('list');return false">☷<br>Movimenti</button>
+<button id="nf" onclick="go('future');return false">◷<br>Uscite</button>
+<button id="ns" onclick="go('settings');return false">⚙<br>Impostazioni</button>
+</nav>
+<div id="toast" class="toast"></div>
+
 <script>
-const staff=["Alice","Federica","Gherlys","Camilla","Daniele"];
-let s=JSON.parse(localStorage.getItem("sm_v1")||"null")||{mode:"manager",tab:"home",requests:[{id:1,p:"Federica",d:"12–13 ottobre",n:"Impegni personali",st:"pending"}],tasks:[["Apertura negozio","Alice"],["Controllo magazzino","Gherlys"],["Sistemazione denim","Federica"],["Controllo cassa","Camilla"],["Chiusura","Daniele"]]};
-function save(){localStorage.setItem("sm_v1",JSON.stringify(s))}
-function pending(){return s.requests.filter(x=>x.st=="pending").length}
-function render(){
-document.getElementById("role").textContent=s.mode=="manager"?"Store Manager":"Risorsa";
-let c=s.tab=="home"?home():s.tab=="planning"?planning():s.tab=="tasks"?tasks():s.tab=="people"?people():requests();
-document.getElementById("content").innerHTML=c;
-let n=s.mode=="manager"?[["home","⌂","Home"],["planning","▦","Planning"],["tasks","✓","Attività"],["people","♙","Personale"],["requests","✉","Richieste"]]:[["home","⌂","Home"],["planning","▦","Miei turni"],["requests","✉","Richieste"]];
-document.getElementById("nav").innerHTML=n.map(x=>`<button class="${s.tab==x[0]?"active":""}" onclick="s.tab='${x[0]}';save();render()"><span class="icon">${x[1]}</span>${x[2]}${x[0]=="requests"&&pending()?` (${pending()})`:""}</button>`).join("");
+const cats=["Alimentari","Benzina","Casa","Auto","Bollette","Affitto","Finanziamento","Tempo libero","Ristoranti","Shopping","Salute","Trasporti","Stipendio","Rimborso","Altro"];
+const fcats=["Casa","Auto","Finanze","Bollette","Abbonamenti","Tasse","Shopping","Altro"];
+const today=new Date();
+const key="budgetAppV3_NEW_200";
+const savingsKey="budget_auto_savings_v6_NEW_200";
+const DEFAULT_SAVINGS=200;
+// Regola fissa dell'app: accantonamento automatico di 200 € per ogni ciclo/mese.
+
+function id(){return Date.now().toString(36)+Math.random().toString(36).slice(2)}
+let D=JSON.parse(localStorage.getItem(key)||"null");
+// Nuova installazione: recupera solo i dati dell'utente dalla versione precedente,
+// ma NON recupera il vecchio contatore del risparmio.
+if(!D){
+  try{
+    const old=JSON.parse(localStorage.getItem("budgetAppV2")||"null");
+    if(old){ D=JSON.parse(JSON.stringify(old)); }
+  }catch(e){}
 }
-function home(){if(s.mode=="resource")return `<div class="card"><div class="muted">AREA RISORSA</div><h2>Ciao Federica 👋</h2><p class="muted">Qui trovi i tuoi turni, le tue attività e le tue richieste.</p></div><div class="section">Prossimo turno</div><div class="card"><b>Sabato 19 settembre</b><div class="muted">10:00–18:00 · Store</div></div>`;
-return `<div class="card"><div class="muted">OGGI · 18 SETTEMBRE</div><h2>Buonasera 👋</h2><div class="grid"><div class="metric"><span class="muted">In turno</span><b>4</b></div><div class="metric"><span class="muted">Attività</span><b>${s.tasks.length}</b></div><div class="metric"><span class="muted">Richieste</span><b>${pending()}</b></div><div class="metric"><span class="muted">Copertura</span><b>100%</b></div></div></div><div class="section">Attività di oggi</div><div class="card">${s.tasks.map(t=>`<div class="task"><div><b>${t[0]}</b><div class="muted">${t[1]}</div></div><span class="pill green">Assegnata</span></div>`).join("")}</div>`}
-function planning(){return `<div class="section">${s.mode=="manager"?"Planning settimana":"I miei turni"}</div><div class="card">${["Lun 14","Mar 15","Mer 16","Gio 17","Ven 18","Sab 19","Dom 20"].map((d,i)=>`<div class="task"><div><b>${d} settembre</b><div class="muted">${s.mode=="manager"?(i==6?"5 persone":"4 persone"):(i<2?"10:00–18:00":"Riposo")}</div></div><span class="pill ${i<2?"green":""}">${s.mode=="manager"?"Copertura":"Turno"}</span></div>`).join("")}</div>`}
-function tasks(){return `<div class="row"><div class="section">Attività di oggi</div><button class="btn" onclick="addTask()">+ Attività</button></div><div class="card">${s.tasks.map(t=>`<div class="task"><div><b>${t[0]}</b><div class="muted">Assegnata a ${t[1]}</div></div><span class="pill">Oggi</span></div>`).join("")}</div><div class="card"><b>Assegnazione automatica</b><p class="muted">Distribuisce e ruota le attività tra le risorse presenti.</p><button class="btn" onclick="auto()">Genera attività</button></div>`}
-function people(){return `<div class="section">Personale</div><div class="card">${staff.map(x=>`<div class="person"><div class="avatar">${x[0]}</div><div style="flex:1"><b>${x}</b><div class="muted">Risorsa · attiva</div></div><span class="pill green">Attiva</span></div>`).join("")}</div>`}
-function requests(){if(s.mode=="resource")return `<div class="row"><div class="section">Le mie richieste</div><button class="btn" onclick="req()">+ Richiesta</button></div><div class="card">${s.requests.filter(x=>x.p=="Federica").map(x=>`<div class="task"><div><b>${x.d}</b><div class="muted">${x.n}</div></div><span class="pill ${x.st=="approved"?"green":x.st=="rejected"?"red":"yellow"}">${x.st=="pending"?"In attesa":x.st=="approved"?"Approvata":"Rifiutata"}</span></div>`).join("")}</div>`;
-return `<div class="section">Richieste giorni liberi</div><div class="card">${s.requests.map(x=>`<div style="padding:12px 0;border-bottom:1px solid #eee"><div class="row"><div><b>${x.p}</b><div class="muted">${x.d}</div></div><span class="pill yellow">${x.st=="pending"?"In attesa":x.st}</span></div><p class="muted">${x.n}</p>${x.st=="pending"?`<button class="btn green" onclick="answer(${x.id},'approved')">Approva</button> <button class="btn red" onclick="answer(${x.id},'rejected')">Rifiuta</button>`:""}</div>`).join("")}</div>`}
-function switchRole(){s.mode=s.mode=="manager"?"resource":"manager";s.tab="home";save();render()}
-function answer(id,st){s.requests.find(x=>x.id==id).st=st;save();render()}
-function req(){let d=prompt("Quali giorni vuoi richiedere?");if(!d)return;s.requests.unshift({id:Date.now(),p:"Federica",d,n:"Richiesta personale",st:"pending"});save();render()}
-function addTask(){let t=prompt("Nome attività");if(t){s.tasks.push([t,staff[s.tasks.length%staff.length]]);save();render()}}
-function auto(){s.tasks=s.tasks.map((x,i)=>[x[0],staff[i%staff.length]]);save();render()}
-render();
-</script></body></html>
+D=D||{
+ s:{y:today.getFullYear(),m:today.getMonth()+1,i:0,t:DEFAULT_SAVINGS,payDay:10},
+ moves:[],
+ future:[]
+};
+
+if(!D.s)D.s={};
+if(!D.s.payDay)D.s.payDay=10;
+D.s.t=DEFAULT_SAVINGS;
+if(typeof D.s.i!=="number")D.s.i=0;
+if(!Array.isArray(D.moves))D.moves=[];
+if(!Array.isArray(D.future))D.future=[];
+localStorage.setItem(key,JSON.stringify(D));
+
+let type="Spesa";
+
+function save(){localStorage.setItem(key,JSON.stringify(D));render()}
+function euro(n){return new Intl.NumberFormat("it-IT",{style:"currency",currency:"EUR"}).format(Number(n)||0)}
+function iso(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
+function dt(s){let [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)}
+function inMonth(s){let d=dt(s);return d.getFullYear()==D.s.y&&d.getMonth()+1==D.s.m}
+function payDate(y,m,day){let last=new Date(y,m+1,0).getDate();return new Date(y,m,Math.min(day,last))}
+
+function cycleEndDate(){
+ let day=Math.min(31,Math.max(1,Number(D.s.payDay)||10));
+ let y=today.getFullYear(),m=today.getMonth();
+ let current=payDate(y,m,day);
+ if(today>=current)m++;
+ return payDate(y,m,day);
+}
+function cycleStartDate(){
+ let day=Math.min(31,Math.max(1,Number(D.s.payDay)||10));
+ let end=cycleEndDate();
+ let prev=payDate(end.getFullYear(),end.getMonth()-1,day);
+ prev.setDate(prev.getDate()+1);
+ return prev;
+}
+function inCycle(s){let d=dt(s),start=cycleStartDate(),end=cycleEndDate();return d>=start&&d<=end}
+function currentCycleKey(){return iso(cycleStartDate())}
+
+/* RISPARMIO AUTOMATICO
+   - primo avvio: protegge subito 200 € (o il valore impostato)
+   - ogni nuovo ciclo: aggiunge automaticamente lo stesso importo
+   - migrazione: se la vecchia versione aveva target 0 e risparmio 0,
+     il nuovo valore predefinito di 200 € viene applicato al primo caricamento.
+*/
+function getAutoSavings(){
+ const target=DEFAULT_SAVINGS;
+ const k=currentCycleKey();
+ let st=null;
+ try{st=JSON.parse(localStorage.getItem(savingsKey)||"null")}catch(e){}
+ // Nuovo contatore indipendente: il ciclo attuale parte SEMPRE da 200 €.
+ // Dal ciclo successivo vengono aggiunti 200 € per ogni nuovo ciclo.
+ if(!st || typeof st.saved!=="number" || !st.lastCycle){
+   st={saved:target,lastCycle:k};
+ }else if(st.lastCycle!==k){
+   const a=dt(st.lastCycle),b=dt(k);
+   let cycles=(b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth());
+   cycles=Math.max(1,cycles);
+   st.saved+=target*cycles;
+   st.lastCycle=k;
+ }
+ st.saved=Math.max(target,Math.round(st.saved*100)/100);
+ localStorage.setItem(savingsKey,JSON.stringify(st));
+ return st.saved;
+}
+
+function calc(){
+ let m=D.moves.filter(x=>inCycle(x.date));
+ let inc=m.filter(x=>x.type==="Entrata").reduce((a,x)=>a+x.amount,0);
+ let sp=m.filter(x=>x.type==="Spesa").reduce((a,x)=>a+x.amount,0);
+ let paid=D.future.filter(x=>x.paid&&inCycle(x.date)).reduce((a,x)=>a+x.amount,0);
+ let bal=D.s.i+inc-sp-paid;
+ let todayIso=iso(new Date()),endIso=iso(cycleEndDate());
+ let commitments=D.future.filter(x=>!x.paid&&x.date>=todayIso&&x.date<=endIso).reduce((a,x)=>a+x.amount,0);
+ let todaySpent=m.filter(x=>x.type==="Spesa"&&x.date===todayIso).reduce((a,x)=>a+x.amount,0);
+ let protectedSavings=getAutoSavings();
+ let remain=Math.max(1,Math.round((cycleEndDate()-new Date(today.getFullYear(),today.getMonth(),today.getDate()))/86400000)+1);
+
+ /* La quota di oggi parte dal budget disponibile all'inizio della giornata.
+    Una spesa registrata oggi viene sottratta 1:1 e NON ricalcola la quota di oggi. */
+ let balanceBeforeToday=bal+todaySpent;
+ let spendableBeforeToday=Math.max(0,balanceBeforeToday-commitments-protectedSavings);
+ let dailyQuota=spendableBeforeToday/remain;
+ let daily=Math.max(0,dailyQuota-todaySpent);
+ let pool=Math.max(0,bal-commitments-protectedSavings);
+
+ return {inc,sp,paid,bal,commitments,daily,remain,endIso,todaySpent,protectedSavings,spendablePool:pool};
+}
+
+function render(){
+ let c=calc();
+ document.getElementById("period").textContent=`Ciclo ${String(D.s.payDay).padStart(2,"0")} → ${String(D.s.payDay).padStart(2,"0")}`;
+ ["balance","daily","spent","income","committed"].forEach((x,i)=>{
+   document.getElementById(x).textContent=euro([c.bal,c.daily,c.sp+c.paid,c.inc,c.commitments][i]);
+ });
+ document.getElementById("spendablePool").textContent=euro(c.spendablePool);
+ document.getElementById("cycleEndLabel").textContent=new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"2-digit"}).format(cycleEndDate());
+ document.getElementById("heroSub").textContent=`Risparmio programmato ${euro(D.s.t)} · Impegni futuri ${euro(c.commitments)} · Budget fino al ${c.endIso.slice(8,10)}/${c.endIso.slice(5,7)}`;
+
+ const saved=c.protectedSavings,target=DEFAULT_SAVINGS;
+ document.getElementById("savedAccum").textContent=euro(saved);
+ document.getElementById("savingTarget").textContent=euro(target);
+ document.getElementById("savingBar").style.width=(target>0?"100%":"0%");
+ document.getElementById("savingNote").innerHTML=target
+ ? `<b>Protetti ${euro(saved)}</b><br>Ogni ciclo aggiunge automaticamente ${euro(target)}. Restano sul conto, ma non sono spendibili.`
+ : `Imposta un importo per il risparmio automatico.`;
+
+ let next=[...D.future].filter(x=>!x.paid&&x.date>=iso(new Date())).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,5);
+ document.getElementById("next").innerHTML=next.length?next.map(x=>itemFuture(x,false)).join(""):'<div class="empty">Nessuna uscita imminente</div>';
+ let rec=[...D.moves].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);
+ document.getElementById("recent").innerHTML=rec.length?rec.map(itemMove).join(""):'<div class="empty">Nessun movimento</div>';
+ let all=[...D.moves.filter(x=>inMonth(x.date))].sort((a,b)=>b.date.localeCompare(a.date));
+ document.getElementById("allMoves").innerHTML=all.length?all.map(itemMove).join(""):'<div class="empty">Nessun movimento nel mese</div>';
+ let fut=[...D.future].sort((a,b)=>a.date.localeCompare(b.date));
+ document.getElementById("allFuture").innerHTML=fut.length?fut.map(x=>itemFuture(x,true)).join(""):'<div class="empty">Nessuna uscita</div>';
+}
+
+function checkAffordability(showToast){
+ const input=document.getElementById("affordAmount"),result=document.getElementById("affordResult"),pill=document.getElementById("affordPill");
+ const amount=Number(input.value);
+ result.className="affordResult muted";pill.className="pill";pill.textContent="CHECK";
+ const old=document.getElementById("affordSimulation");if(old)old.remove();
+ if(!(amount>0)){result.textContent="Inserisci un importo per fare il controllo.";return false}
+ const c=calc();
+ const leftToday=c.daily-amount;
+ const pool=c.spendablePool;
+ const daysAfter=Math.max(0,c.remain-1);
+ const futureDaily=daysAfter>0?Math.max(0,(pool-amount)/daysAfter):Math.max(0,pool-amount);
+ const sim=document.createElement("div");
+ sim.id="affordSimulation";sim.className="afford-sim";
+ const todayLeft=Math.max(0,leftToday);
+ sim.innerHTML=`<div class="sim-title">Se fai questa spesa...</div>
+ <div class="sim-grid">
+ <div class="sim-box"><div class="sim-label">Oggi ti rimangono</div><div class="sim-value">${euro(todayLeft)}</div></div>
+ <div class="sim-box"><div class="sim-label">Da domani avresti</div><div class="sim-value">${euro(futureDaily)}/giorno</div></div>
+ </div>`;
+ result.insertAdjacentElement("afterend",sim);
+
+ if(leftToday>=-0.005){
+   result.className="affordResult yes";pill.className="pill yes";pill.textContent="SÌ";
+   result.textContent="Sì. La spesa rientra nello spendibile di oggi.";
+   if(showToast)toast("Sì, rientra nel budget di oggi");
+   return true;
+ }
+ if(amount<=pool){
+   result.className="affordResult warn";pill.className="pill warn";pill.textContent="ATTENZIONE";
+   result.textContent=`Oggi no: supereresti lo spendibile di ${euro(amount-c.daily)}, ma la spesa rientra nel budget del ciclo.`;
+   if(showToast)toast("Attenzione: supera il budget di oggi");
+   return false;
+ }
+ result.className="affordResult no";pill.className="pill no";pill.textContent="NO";
+ result.textContent=`No. La spesa supera anche il budget del ciclo di ${euro(amount-pool)}.`;
+ if(showToast)toast("No, non rientra nel budget");
+ return false;
+}
+
+function itemMove(x){
+ return `<div class="item"><div><b>${x.desc||x.cat}</b><div class="muted">${x.date} · ${x.cat}</div></div>
+ <div style="text-align:right"><div class="amount ${x.type==="Spesa"?"red":"green"}">${x.type==="Spesa"?"−":"+"}${euro(x.amount)}</div>
+ <button class="danger" style="margin-top:5px;padding:5px 8px;font-size:11px" onclick="delMove('${x.id}')">Elimina</button></div></div>`;
+}
+function itemFuture(x,del){
+ return `<div class="item"><div><b>${x.desc}</b><div class="muted">${x.date} · ${x.cat} · ${x.paid?"Pagato":"Da pagare"}</div></div>
+ <div style="text-align:right"><div class="amount">${euro(x.amount)}</div>
+ <button class="${x.paid?"light":"primary"}" style="margin-top:5px;padding:5px 8px;font-size:11px" onclick="togglePaid('${x.id}')">${x.paid?"Segna da pagare":"Segna pagato"}</button>
+ ${del?` <button class="danger" style="padding:5px 8px;font-size:11px" onclick="delFuture('${x.id}')">×</button>`:""}</div></div>`;
+}
+function setType(t){type=t;document.getElementById("spesa").classList.toggle("on",t==="Spesa");document.getElementById("entrata").classList.toggle("on",t==="Entrata")}
+function addMove(){
+ let a=Number(document.getElementById("ma").value),d=document.getElementById("md").value;
+ if(!d||!(a>0))return toast("Inserisci data e importo");
+ D.moves.push({id:id(),date:d,type,cat:document.getElementById("mc").value,desc:document.getElementById("mx").value.trim(),amount:a});
+ document.getElementById("ma").value="";document.getElementById("mx").value="";save();toast("Movimento salvato");go("home");
+}
+function addFuture(){
+ let a=Number(document.getElementById("fa").value),d=document.getElementById("fd").value;
+ if(!d||!(a>0))return toast("Inserisci data e importo");
+ D.future.push({id:id(),date:d,desc:document.getElementById("fx").value.trim()||"Uscita",cat:document.getElementById("fc").value,amount:a,paid:false});
+ document.getElementById("fa").value="";document.getElementById("fx").value="";save();toast("Uscita aggiunta");
+}
+function delMove(i){if(confirm("Eliminare il movimento?")){D.moves=D.moves.filter(x=>x.id!==i);save()}}
+function delFuture(i){if(confirm("Eliminare l'uscita?")){D.future=D.future.filter(x=>x.id!==i);save()}}
+function togglePaid(i){let x=D.future.find(x=>x.id===i);if(x){x.paid=!x.paid;save()}}
+function saveSettings(){
+ D.s.y=Number(document.getElementById("sy").value);
+ D.s.m=Number(document.getElementById("sm").value);
+ D.s.i=Number(document.getElementById("si").value)||0;
+ D.s.t=Math.max(0,Number(document.getElementById("st").value)||0);
+ D.s.payDay=Number(document.getElementById("pd").value)||10;
+ save();toast("Impostazioni salvate");go("home");
+}
+function go(idn){
+ document.querySelectorAll(".screen").forEach(x=>x.classList.remove("on"));
+ const target=document.getElementById(idn);if(!target)return;
+ target.classList.add("on");
+ document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("on"));
+ const map={home:"nh",list:"nl",future:"nf",settings:"ns"};if(map[idn])document.getElementById(map[idn]).classList.add("on");
+ window.scrollTo(0,0);
+}
+function toast(t){let x=document.getElementById("toast");x.textContent=t;x.style.display="block";setTimeout(()=>x.style.display="none",1800)}
+function exportData(){
+ let b=new Blob([JSON.stringify(D,null,2)],{type:"application/json"}),a=document.createElement("a");
+ a.href=URL.createObjectURL(b);a.download="budget-backup.json";a.click();
+}
+function importData(e){
+ let f=e.target.files[0];if(!f)return;
+ let r=new FileReader();
+ r.onload=()=>{
+  try{let x=JSON.parse(r.result);if(!x.s||!Array.isArray(x.moves)||!Array.isArray(x.future))throw 0;
+  D=x;D.s.t=DEFAULT_SAVINGS;save();toast("Backup importato")}
+  catch(_){toast("Backup non valido")}
+ };
+ r.readAsText(f);
+}
+function resetData(){
+ if(confirm("Cancello tutti i dati?")){
+   localStorage.removeItem(key);localStorage.removeItem(savingsKey);location.reload();
+ }
+}
+function fill(){
+ document.getElementById("mc").innerHTML=cats.map(x=>`<option>${x}</option>`).join("");
+ document.getElementById("fc").innerHTML=fcats.map(x=>`<option>${x}</option>`).join("");
+ let ms=["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
+ document.getElementById("sm").innerHTML=ms.map((x,i)=>`<option value="${i+1}">${x}</option>`).join("");
+ document.getElementById("pd").innerHTML=Array.from({length:31},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join("");
+ document.getElementById("sy").value=D.s.y;document.getElementById("sm").value=D.s.m;document.getElementById("si").value=D.s.i;
+ document.getElementById("st").value=DEFAULT_SAVINGS;document.getElementById("pd").value=D.s.payDay||10;
+ document.getElementById("md").value=iso(new Date());document.getElementById("fd").value=iso(new Date());
+}
+fill();render();
+</script>
+</body>
+</html>
