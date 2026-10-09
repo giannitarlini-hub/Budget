@@ -327,6 +327,8 @@ function render(){
  document.getElementById("allMoves").innerHTML=all.length?all.map(itemMove).join(""):'<div class="empty">Nessun movimento nel mese</div>';
  let fut=[...D.future].sort((a,b)=>a.date.localeCompare(b.date));
  document.getElementById("allFuture").innerHTML=fut.length?fut.map(x=>itemFuture(x,true)).join(""):'<div class="empty">Nessuna uscita</div>';
+ // Aggiorna anche la sezione Carte dopo ogni salvataggio, così le carte registrate compaiono subito.
+ renderCards();
 }
 
 function renderCards(){
