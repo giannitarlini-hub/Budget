@@ -285,10 +285,12 @@ function inMonth(s){let d=dt(s);return d.getFullYear()==D.s.y&&d.getMonth()+1==D
 function payDate(y,m,day){let last=new Date(y,m+1,0).getDate();return new Date(y,m,Math.min(day,last))}
 
 function cycleEndDate(){
- let day=Math.min(31,Math.max(1,Number(D.s.payDay)||10));
- let y=today.getFullYear(),m=today.getMonth();
- let current=payDate(y,m,day);
- if(today>=current)m++;
+ const now=new Date();
+ const day=Math.min(31,Math.max(1,Number(D.s.payDay)||10));
+ let y=now.getFullYear(),m=now.getMonth();
+ const current=payDate(y,m,day);
+ const todayMidnight=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+ if(todayMidnight>current || todayMidnight.getTime()===current.getTime()) m++;
  return payDate(y,m,day);
 }
 function cycleStartDate(){
@@ -367,11 +369,12 @@ function calc(){
  const protectedSavings=getAutoSavings();
  const todayMidnight=new Date(now.getFullYear(),now.getMonth(),now.getDate());
  const remain=Math.max(1,Math.round((end-todayMidnight)/86400000)+1);
- // Ricostruisce il budget a inizio giornata e sottrae tutte le spese di oggi.
+ // Ricostruisce il budget all'inizio della giornata: il saldo include già le uscite di oggi,
+ // quindi le riaggiungiamo prima di calcolare la quota e sottraiamo poi l'intero speso oggi.
  const balanceBeforeToday=bal+todaySpent;
  const spendableBeforeToday=Math.max(0,balanceBeforeToday-commitments-cardReserved-protectedSavings);
  const dailyQuota=spendableBeforeToday/remain;
- const daily=Math.max(0,dailyQuota-todaySpent);
+ const daily=Math.max(0,Math.round((dailyQuota-todaySpent)*100)/100);
  const pool=Math.max(0,bal-commitments-cardReserved-protectedSavings);
  return {inc,sp,paid,cardSettled,cardReserved,bal,commitments,daily,remain,endIso,todaySpent,protectedSavings,spendablePool:pool};
 }
@@ -487,10 +490,17 @@ function itemFuture(x,del){
 }
 function setType(t){type=t;document.getElementById("spesa").classList.toggle("on",t==="Spesa");document.getElementById("entrata").classList.toggle("on",t==="Entrata")}
 function addMove(){
- let a=Number(document.getElementById("ma").value),d=document.getElementById("md").value;
+ const a=Number(document.getElementById("ma").value);
+ const d=document.getElementById("md").value;
  if(!d||!(a>0))return toast("Inserisci data e importo");
- D.moves.push({id:id(),date:d,type,cat:document.getElementById("mc").value,desc:document.getElementById("mx").value.trim(),amount:a});
- document.getElementById("ma").value="";document.getElementById("mx").value="";save();toast("Movimento salvato");go("home");
+ const movementType=type==="Entrata"?"Entrata":"Spesa";
+ D.moves.push({id:id(),date:d,type:movementType,cat:document.getElementById("mc").value,desc:document.getElementById("mx").value.trim(),amount:a});
+ document.getElementById("ma").value="";
+ document.getElementById("mx").value="";
+ localStorage.setItem(key,JSON.stringify(D));
+ render();
+ toast("Movimento salvato");
+ go("home");
 }
 function addFuture(){
  let a=Number(document.getElementById("fa").value),d=document.getElementById("fd").value;
