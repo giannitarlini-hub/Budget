@@ -350,31 +350,29 @@ function getAutoSavings(){
 }
 
 function calc(){
- let m=D.moves.filter(x=>inCycle(x.date));
- let inc=m.filter(x=>x.type==="Entrata").reduce((a,x)=>a+x.amount,0);
- let sp=m.filter(x=>x.type==="Spesa").reduce((a,x)=>a+x.amount,0);
- let paid=D.future.filter(x=>x.paid&&inCycle(x.date)).reduce((a,x)=>a+x.amount,0);
- let todayIso=iso(new Date()),endIso=iso(cycleEndDate());
- // Il saldo reale diminuisce soltanto quando arriva il giorno di addebito della carta.
- let cardSettled=D.cardExpenses.filter(x=>inCycle(cardDueDate(x))&&cardDueDate(x)<=todayIso).reduce((a,x)=>a+x.amount,0);
- let bal=D.s.i+inc-sp-paid-cardSettled;
- // Le uscite future ordinarie restano separate dalle carte.
- let commitments=D.future.filter(x=>!x.paid&&x.date>=todayIso&&x.date<=endIso).reduce((a,x)=>a+x.amount,0);
- // Gli acquisti con carta riservano budget subito, fino al giorno dell'addebito.
- // Nel giorno di addebito passano da riserva a saldo, senza essere conteggiati due volte.
- let cardReserved=D.cardExpenses.filter(x=>cardDueDate(x)>todayIso).reduce((a,x)=>a+x.amount,0);
- let todaySpent=m.filter(x=>x.type==="Spesa"&&x.date===todayIso).reduce((a,x)=>a+x.amount,0);
- let protectedSavings=getAutoSavings();
- let remain=Math.max(1,Math.round((cycleEndDate()-new Date(today.getFullYear(),today.getMonth(),today.getDate()))/86400000)+1);
-
- /* Lo spendibile tiene conto delle spese normali di oggi e degli acquisti già fatti con carta.
-    Le spese carta sono riservate subito e scalate dal saldo solo alla data di addebito. */
- let balanceBeforeToday=bal+todaySpent;
- let spendableBeforeToday=Math.max(0,balanceBeforeToday-commitments-cardReserved-protectedSavings);
- let dailyQuota=spendableBeforeToday/remain;
- let daily=Math.max(0,dailyQuota-todaySpent);
- let pool=Math.max(0,bal-commitments-cardReserved-protectedSavings);
-
+ // Ricalcola usando sempre la data locale corrente.
+ const now=new Date();
+ const todayIso=iso(now);
+ const end=cycleEndDate();
+ const endIso=iso(end);
+ const m=D.moves.filter(x=>inCycle(x.date));
+ const inc=m.filter(x=>x.type==="Entrata").reduce((a,x)=>a+(Number(x.amount)||0),0);
+ const sp=m.filter(x=>x.type==="Spesa").reduce((a,x)=>a+(Number(x.amount)||0),0);
+ const paid=D.future.filter(x=>x.paid&&inCycle(x.date)).reduce((a,x)=>a+(Number(x.amount)||0),0);
+ const cardSettled=D.cardExpenses.filter(x=>inCycle(cardDueDate(x))&&cardDueDate(x)<=todayIso).reduce((a,x)=>a+(Number(x.amount)||0),0);
+ const bal=(Number(D.s.i)||0)+inc-sp-paid-cardSettled;
+ const commitments=D.future.filter(x=>!x.paid&&x.date>=todayIso&&x.date<=endIso).reduce((a,x)=>a+(Number(x.amount)||0),0);
+ const cardReserved=D.cardExpenses.filter(x=>cardDueDate(x)>todayIso).reduce((a,x)=>a+(Number(x.amount)||0),0);
+ const todaySpent=D.moves.filter(x=>x.type==="Spesa"&&x.date===todayIso&&inCycle(x.date)).reduce((a,x)=>a+(Number(x.amount)||0),0);
+ const protectedSavings=getAutoSavings();
+ const todayMidnight=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+ const remain=Math.max(1,Math.round((end-todayMidnight)/86400000)+1);
+ // Ricostruisce il budget a inizio giornata e sottrae tutte le spese di oggi.
+ const balanceBeforeToday=bal+todaySpent;
+ const spendableBeforeToday=Math.max(0,balanceBeforeToday-commitments-cardReserved-protectedSavings);
+ const dailyQuota=spendableBeforeToday/remain;
+ const daily=Math.max(0,dailyQuota-todaySpent);
+ const pool=Math.max(0,bal-commitments-cardReserved-protectedSavings);
  return {inc,sp,paid,cardSettled,cardReserved,bal,commitments,daily,remain,endIso,todaySpent,protectedSavings,spendablePool:pool};
 }
 
@@ -512,6 +510,7 @@ function saveSettings(){
  save();toast("Impostazioni salvate");go("home");
 }
 function go(idn){
+ if(idn==="add")setType("Spesa");
  document.querySelectorAll(".screen").forEach(x=>x.classList.remove("on"));
  const target=document.getElementById(idn);if(!target)return;
  target.classList.add("on");
