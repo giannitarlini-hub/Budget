@@ -214,6 +214,51 @@ input:focus,select:focus,textarea:focus{
 .big,.amount,.value,.number{font-variant-numeric:tabular-nums;}
 @media(prefers-reduced-motion:reduce){button,.btn{transition:none;}}
 
+
+
+/* FOTO DI SFONDO + VETRO TRASPARENTE — solo presentazione */
+:root{
+  --bg:#dceeff; --card:rgba(255,255,255,.80); --text:#102c59;
+  --muted:#526d91; --line:rgba(255,255,255,.65);
+  --accent:#1677e8; --accent2:#2d9bf0;
+  --shadow:0 12px 34px rgba(12,49,94,.16)
+}
+html{min-height:100%;background:#dceeff}
+body{
+  min-height:100vh;
+  background-image:
+    linear-gradient(180deg,rgba(215,235,255,.30),rgba(235,245,255,.18) 45%,rgba(11,55,91,.10)),
+    url('https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1800&q=85');
+  background-position:center,center;
+  background-size:cover;
+  background-attachment:fixed;
+  background-repeat:no-repeat;
+  color:var(--text)
+}
+.card,.cardTile,.sim-box,.afford-sim,.savings{
+  background:rgba(255,255,255,.80)!important;
+  border:1px solid rgba(255,255,255,.78)!important;
+  box-shadow:0 12px 32px rgba(10,45,84,.13);
+  -webkit-backdrop-filter:blur(16px) saturate(135%);
+  backdrop-filter:blur(16px) saturate(135%)
+}
+.hero{
+  background:linear-gradient(135deg,rgba(20,90,165,.91),rgba(35,139,219,.84))!important;
+  color:#fff!important;border:1px solid rgba(255,255,255,.65)!important;
+  box-shadow:0 16px 38px rgba(7,48,100,.22)
+}
+.hero .muted{color:rgba(255,255,255,.84)!important}
+.top h1{color:#10386b;text-shadow:0 1px 10px rgba(255,255,255,.25)}
+.top p{color:#284f7c}
+button, .nav button{transition:transform .16s ease,box-shadow .16s ease}
+button:active,.nav button:active{transform:scale(.98)}
+input,select,textarea{background:rgba(255,255,255,.92)!important;border-color:rgba(102,145,190,.35)!important}
+@media(max-width:600px){
+ body{background-attachment:scroll;background-position:center;background-size:cover}
+ .card,.cardTile,.sim-box,.afford-sim,.savings{background:rgba(255,255,255,.86)!important}
+}
+@media(prefers-reduced-motion:reduce){button,.nav button{transition:none}}
+
 </style>
 </head>
 <body>
