@@ -259,6 +259,49 @@ input,select,textarea{background:rgba(255,255,255,.92)!important;border-color:rg
 }
 @media(prefers-reduced-motion:reduce){button,.nav button{transition:none}}
 
+
+
+/* CONTRASTO MIGLIORATO PER L'INTESTAZIONE E LA PRIMA SCHERMATA */
+.top{
+  background:rgba(255,255,255,.88);
+  border:1px solid rgba(255,255,255,.95);
+  border-radius:22px;
+  padding:14px 16px;
+  margin:0 0 14px;
+  box-shadow:0 8px 24px rgba(15,48,86,.12);
+  -webkit-backdrop-filter:blur(18px) saturate(140%);
+  backdrop-filter:blur(18px) saturate(140%);
+}
+.top h1{color:#10386b!important;text-shadow:none!important}
+.top p{color:#294f79!important;text-shadow:none!important}
+.top button,.top .light{
+  background:#eaf3ff!important;
+  color:#153f78!important;
+  border:1px solid #c6dcf8!important;
+  box-shadow:0 3px 10px rgba(16,56,107,.10)
+}
+#home>.hero{
+  background:linear-gradient(135deg,rgba(13,54,111,.97),rgba(25,105,190,.95) 58%,rgba(48,145,218,.94))!important;
+  color:#fff!important;
+  border:1px solid rgba(255,255,255,.82)!important;
+  box-shadow:0 16px 38px rgba(9,47,98,.28)!important;
+}
+#home>.hero .muted,
+#home>.hero p,
+#home>.hero .heroMini .muted{color:#eaf4ff!important;opacity:1!important}
+#home>.hero .big,
+#home>.hero .heroMini .v{color:#fff!important;text-shadow:0 1px 1px rgba(0,0,0,.08)}
+#home>.hero .heroMini{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:14px;padding:10px}
+#home>.grid .metric{background:rgba(255,255,255,.94)!important;color:#102c59!important}
+#home>.grid .metric .muted{color:#526d91!important;opacity:1!important}
+#home>.grid .metric b{color:#123765!important}
+#home .sectionHead h2{color:#123765}
+#home .card:not(.hero) .muted{color:#526783}
+@media(max-width:600px){
+  .top{padding:12px 13px;border-radius:18px}
+  #home>.hero{padding:20px 17px}
+}
+
 </style>
 </head>
 <body>
