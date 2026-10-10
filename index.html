@@ -329,9 +329,9 @@ function getAutoSavings(){
  const k=currentCycleKey();
  let st=null;
  try{st=JSON.parse(localStorage.getItem(savingsKey)||"null")}catch(e){}
- // Correzione una tantum per il caso riscontrato: secondo mese, ma contatore a 800 €.
- // La chiave separata impedisce che la correzione venga riapplicata nei cicli successivi.
- const fixKey="budget_auto_savings_fix_second_month_v1";
+ // Correzione una tantum della duplicazione: dopo due cicli da 200 € il totale deve essere 400 €.
+ // Usa una nuova chiave di migrazione, così funziona anche se la correzione precedente era già stata segnata.
+ const fixKey="budget_auto_savings_fix_second_month_v2";
  if(!localStorage.getItem(fixKey) && st && typeof st.saved==="number" && st.saved===800){
    st.saved=400;
    st.lastCycle=k;
