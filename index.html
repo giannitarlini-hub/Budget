@@ -290,15 +290,15 @@ function cycleEndDate(){
  let y=now.getFullYear(),m=now.getMonth();
  const current=payDate(y,m,day);
  const todayMidnight=new Date(now.getFullYear(),now.getMonth(),now.getDate());
- if(todayMidnight>current) m++;
+ if(todayMidnight>current || todayMidnight.getTime()===current.getTime()) m++;
  return payDate(y,m,day);
 }
 function cycleStartDate(){
  let day=Math.min(31,Math.max(1,Number(D.s.payDay)||10));
  let end=cycleEndDate();
- let prev=payDate(end.getFullYear(),end.getMonth()-1,day);
- prev.setDate(prev.getDate()+1);
- return prev;
+ // Il ciclo include il giorno di accredito: il 10/10 appartiene già
+ // al nuovo ciclo se il giorno di accredito impostato è il 10.
+ return payDate(end.getFullYear(),end.getMonth()-1,day);
 }
 function inCycle(s){let d=dt(s),start=cycleStartDate(),end=cycleEndDate();return d>=start&&d<=end}
 function currentCycleKey(){return iso(cycleStartDate())}
@@ -365,7 +365,7 @@ function calc(){
  const bal=(Number(D.s.i)||0)+inc-sp-paid-cardSettled;
  const commitments=D.future.filter(x=>!x.paid&&x.date>=todayIso&&x.date<=endIso).reduce((a,x)=>a+(Number(x.amount)||0),0);
  const cardReserved=D.cardExpenses.filter(x=>cardDueDate(x)>todayIso).reduce((a,x)=>a+(Number(x.amount)||0),0);
- const todaySpent=D.moves.filter(x=>x.type==="Spesa"&&x.date===todayIso&&inCycle(x.date)).reduce((a,x)=>a+(Number(x.amount)||0),0);
+ const todaySpent=D.moves.filter(x=>x.type==="Spesa"&&x.date===todayIso).reduce((a,x)=>a+(Number(x.amount)||0),0);
  const protectedSavings=getAutoSavings();
  const todayMidnight=new Date(now.getFullYear(),now.getMonth(),now.getDate());
  const remain=Math.max(1,Math.round((end-todayMidnight)/86400000)+1);
@@ -493,14 +493,19 @@ function addMove(){
  const a=Number(document.getElementById("ma").value);
  const d=document.getElementById("md").value;
  if(!d||!(a>0))return toast("Inserisci data e importo");
- const movementType=type==="Entrata"?"Entrata":"Spesa";
- D.moves.push({id:id(),date:d,type:movementType,cat:document.getElementById("mc").value,desc:document.getElementById("mx").value.trim(),amount:a});
+ // Forza il tipo corretto e salva la data ISO del campo senza conversioni di fuso orario.
+ const movementType=(type==="Entrata")?"Entrata":"Spesa";
+ const movement={id:id(),date:String(d).slice(0,10),type:movementType,cat:document.getElementById("mc").value,desc:document.getElementById("mx").value.trim(),amount:Math.round(a*100)/100};
+ D.moves.push(movement);
+ localStorage.setItem(key,JSON.stringify(D));
+ // Aggiornamento immediato della schermata: il movimento viene già incluso nel ricalcolo.
+ go("home");
+ render();
+ const dailyEl=document.getElementById("daily");
+ if(dailyEl){ const updated=calc(); dailyEl.textContent=euro(updated.daily); }
  document.getElementById("ma").value="";
  document.getElementById("mx").value="";
- localStorage.setItem(key,JSON.stringify(D));
- render();
- toast("Movimento salvato");
- go("home");
+ toast(movementType==="Spesa"?"Uscita salvata: spendibile aggiornato":"Entrata salvata: spendibile aggiornato");
 }
 function addFuture(){
  let a=Number(document.getElementById("fa").value),d=document.getElementById("fd").value;
