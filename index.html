@@ -290,7 +290,7 @@ function cycleEndDate(){
  let y=now.getFullYear(),m=now.getMonth();
  const current=payDate(y,m,day);
  const todayMidnight=new Date(now.getFullYear(),now.getMonth(),now.getDate());
- if(todayMidnight>current || todayMidnight.getTime()===current.getTime()) m++;
+ if(todayMidnight>current) m++;
  return payDate(y,m,day);
 }
 function cycleStartDate(){
