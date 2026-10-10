@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#1677ff">
+<meta name="theme-color" content="#f3f7ff">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="application-name" content="Budget">
@@ -141,6 +141,79 @@ input::placeholder{color:#98a7ba}
  .row{gap:7px}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}button{transition:none}}
+
+
+/* RESTYLING BUDGET — solo presentazione, nessuna modifica ai calcoli */
+:root{
+  color-scheme:light;
+  --bg:#f3f7ff;
+  --panel:rgba(255,255,255,.88);
+  --card:rgba(255,255,255,.94);
+  --text:#142746;
+  --muted:#6e7f99;
+  --line:rgba(103,137,190,.19);
+  --blue:#2563eb;
+  --blue2:#38bdf8;
+  --green:#07875d;
+  --red:#d9485f;
+  --shadow:0 14px 38px rgba(40,78,135,.09);
+}
+html{background:#f3f7ff;min-height:100%;}
+body{
+  color:var(--text);
+  background:
+    radial-gradient(ellipse at 5% 0%,rgba(96,165,250,.22),transparent 36%),
+    radial-gradient(ellipse at 100% 12%,rgba(56,189,248,.16),transparent 32%),
+    linear-gradient(145deg,#f8fbff 0%,#eff5ff 48%,#f8fbff 100%);
+  background-attachment:fixed;
+}
+header,.header,.topbar,.hero,.balance-card,.main-card{
+  border-color:var(--line);
+}
+.card,.panel,.section,.box,.item,.transaction,.stat,.summary,.tile,.modal-content{
+  border-color:var(--line);
+}
+.card,.panel,.section,.summary,.tile,.modal-content{
+  background:var(--card);
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+button,.btn,input,select,textarea{
+  border-radius:13px;
+}
+button,.btn{
+  transition:transform .16s ease,box-shadow .16s ease,background-color .16s ease;
+}
+button:active,.btn:active{transform:translateY(1px);}
+input,select,textarea{
+  background:rgba(255,255,255,.92);
+  color:var(--text);
+  border-color:#d8e4f5;
+}
+input:focus,select:focus,textarea:focus{
+  outline:0;
+  border-color:#60a5fa;
+  box-shadow:0 0 0 3px rgba(59,130,246,.13);
+}
+/* Accenti visivi coordinati con il tema chiaro */
+.top h1{color:#123765}
+.hero{background:linear-gradient(135deg,#163b75 0%,#2469c9 58%,#58a5f5 100%);color:#fff;border:1px solid rgba(255,255,255,.7);box-shadow:0 15px 34px rgba(37,99,180,.19)}
+.metric{background:rgba(255,255,255,.92);border-color:#dce8f8;box-shadow:0 5px 16px rgba(35,78,139,.045)}
+.metric:nth-child(1){background:linear-gradient(145deg,#edf5ff,#e3efff);border-color:#c9defc}
+.metric:nth-child(2){background:linear-gradient(145deg,#fff,#fff7f8);border-color:#f4dce1}
+.metric:nth-child(3){background:linear-gradient(145deg,#fff,#f1fbf6);border-color:#d1eee0}
+.metric:nth-child(4){background:linear-gradient(145deg,#fff,#f5f8ff);border-color:#dce6f6}
+.nav{background:rgba(255,255,255,.9);border-top-color:#dce7f5;box-shadow:0 -8px 24px rgba(36,72,124,.08)}
+.nav button{color:#657995}
+.nav button.on{background:#e7f1ff;color:#1458b7}
+.fab{background:linear-gradient(145deg,#2563eb,#164db7)!important;box-shadow:0 12px 28px rgba(37,99,235,.28)}
+.cardTile{background:rgba(255,255,255,.94);border-color:#dce7f5}
+.savings,.affordability{background:linear-gradient(150deg,rgba(255,255,255,.98),rgba(242,248,255,.96));border-color:#d7e6fa}
+/* Mantiene le gerarchie dei numeri senza alterare il loro valore */
+.big,.amount,.value,.number{font-variant-numeric:tabular-nums;}
+@media(prefers-reduced-motion:reduce){button,.btn{transition:none;}}
+
 </style>
 </head>
 <body>
