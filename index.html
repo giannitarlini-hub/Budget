@@ -360,21 +360,20 @@ input,select,textarea{background:rgba(255,255,255,.92)!important;border-color:rg
 <section id="cards" class="screen">
  <div class="card">
   <div class="sectionHead"><h2>Le mie carte</h2><span class="pill">CARTE</span></div>
-  <div class="muted">Registra gli acquisti con carta. Non vengono scalati subito dal budget: l'addebito viene conteggiato nella data di saldo impostata per la carta.</div>
+  <div class="muted">Ogni acquisto registrato riduce subito la disponibilità reale. Qui vedi il totale del prossimo addebito per ogni carta.</div>
   <label>Nome carta</label><input id="cn" placeholder="Es. Visa principale">
-  <label>Giorno di saldo mensile</label><select id="csd"></select>
+  <div class="row"><div><label>Giorno chiusura</label><select id="cclose"></select></div><div><label>Giorno addebito</label><select id="cdebit"></select></div></div>
   <button class="primary" style="width:100%;margin-top:13px" onclick="addCard()">Aggiungi carta</button>
   <div id="cardsList" style="margin-top:14px"></div>
  </div>
  <div class="card">
-  <h2>Registra una spesa con carta</h2>
+  <h2>＋ Aggiungi una spesa</h2>
   <label>Carta utilizzata</label><select id="ceCard"></select>
   <label>Data acquisto</label><input id="ced" type="date">
-  <label>Descrizione</label><input id="cex" placeholder="Es. Spesa supermercato">
-  <div class="row"><div><label>Categoria</label><select id="cec"></select></div><div><label>Importo (€)</label><input id="cea" type="number" min="0" step=".01" inputmode="decimal" placeholder="0,00"></div></div>
-  <button class="primary" style="width:100%;margin-top:13px" onclick="addCardExpense()">Registra acquisto</button>
+  <label>Descrizione (facoltativa)</label><input id="cex" placeholder="Es. Spesa supermercato">
+  <label>Importo (€)</label><input id="cea" type="number" min="0" step=".01" inputmode="decimal" placeholder="0,00">
+  <button class="primary" style="width:100%;margin-top:13px" onclick="addCardExpense()">Registra spesa</button>
  </div>
- <div class="card"><div class="sectionHead"><h2>Acquisti e prossimi saldi</h2></div><div id="cardExpensesList"></div></div>
 </section>
 
 <section id="settings" class="screen"><div class="card"><h2>Impostazioni</h2>
@@ -464,19 +463,26 @@ function cycleStartDate(){
 function inCycle(s){let d=dt(s),start=cycleStartDate(),end=cycleEndDate();return d>=start&&d<=end}
 function currentCycleKey(){return iso(cycleStartDate())}
 function cardById(cardId){return D.cards.find(c=>c.id===cardId)}
-// Gli acquisti prima del giorno di saldo sono addebitati al prossimo saldo mensile;
-// gli acquisti effettuati il giorno del saldo o dopo passano al mese successivo.
+// La chiusura dell'estratto e il giorno dell'addebito sono distinti.
+// Fino al giorno di chiusura incluso: addebito il mese successivo.
+// Dopo la chiusura: addebito due mesi dopo il mese dell'acquisto.
 function cardDueDate(expense){
  const card=cardById(expense.cardId);
  if(!card)return expense.date;
- const d=dt(expense.date),day=Math.min(31,Math.max(1,Number(card.settleDay)||10));
- let y=d.getFullYear(),m=d.getMonth();
- if(d.getDate()>=day)m++;
- return iso(payDate(y,m,day));
-}
-function cardExpensesSettledInCycle(){
- const now=iso(new Date());
- return D.cardExpenses.filter(x=>inCycle(cardDueDate(x))&&cardDueDate(x)<=now);
+ const d=dt(expense.date);
+ // Compatibilità con eventuali carte vecchie non ancora configurate:
+ // conserva per loro la vecchia regola finché non si impostano i due giorni.
+ if(card.closingDay==null || card.debitDay==null){
+   const legacyDay=Math.min(31,Math.max(1,Number(card.settleDay)||10));
+   let y=d.getFullYear(),m=d.getMonth();
+   if(d.getDate()>=legacyDay)m++;
+   return iso(payDate(y,m,legacyDay));
+ }
+ const closingDay=Math.min(31,Math.max(1,Number(card.closingDay)||1));
+ const debitDay=Math.min(31,Math.max(1,Number(card.debitDay)||1));
+ const closingDate=payDate(d.getFullYear(),d.getMonth(),closingDay);
+ const monthsAhead=d<=closingDate?1:2;
+ return iso(payDate(d.getFullYear(),d.getMonth()+monthsAhead,debitDay));
 }
 
 /* RISPARMIO AUTOMATICO
@@ -522,11 +528,14 @@ function calc(){
  const inc=m.filter(x=>x.type==="Entrata").reduce((a,x)=>a+(Number(x.amount)||0),0);
  const sp=m.filter(x=>x.type==="Spesa").reduce((a,x)=>a+(Number(x.amount)||0),0);
  const paid=D.future.filter(x=>x.paid&&inCycle(x.date)).reduce((a,x)=>a+(Number(x.amount)||0),0);
- const cardSettled=D.cardExpenses.filter(x=>inCycle(cardDueDate(x))&&cardDueDate(x)<=todayIso).reduce((a,x)=>a+(Number(x.amount)||0),0);
+ const cardSettled=D.cardExpenses.filter(x=>inCycle(x.date)).reduce((a,x)=>a+(Number(x.amount)||0),0);
  const bal=(Number(D.s.i)||0)+inc-sp-paid-cardSettled;
  const commitments=D.future.filter(x=>!x.paid&&x.date>=todayIso&&x.date<=endIso).reduce((a,x)=>a+(Number(x.amount)||0),0);
- const cardReserved=D.cardExpenses.filter(x=>cardDueDate(x)>todayIso).reduce((a,x)=>a+(Number(x.amount)||0),0);
- const todaySpent=D.moves.filter(x=>x.type==="Spesa"&&x.date===todayIso).reduce((a,x)=>a+(Number(x.amount)||0),0);
+ // La spesa con carta è già sottratta alla data d'acquisto: non riservarla
+ // una seconda volta al giorno dell'addebito.
+ const cardReserved=0;
+ const todaySpent=D.moves.filter(x=>x.type==="Spesa"&&x.date===todayIso).reduce((a,x)=>a+(Number(x.amount)||0),0)
+   +D.cardExpenses.filter(x=>x.date===todayIso).reduce((a,x)=>a+(Number(x.amount)||0),0);
  const protectedSavings=getAutoSavings();
  const todayMidnight=new Date(now.getFullYear(),now.getMonth(),now.getDate());
  const remain=Math.max(1,Math.round((end-todayMidnight)/86400000)+1);
@@ -571,30 +580,35 @@ function render(){
 }
 
 function renderCards(){
- const cardsList=document.getElementById("cardsList"),ceCard=document.getElementById("ceCard"),expensesList=document.getElementById("cardExpensesList");
- if(!cardsList||!ceCard||!expensesList)return;
+ const cardsList=document.getElementById("cardsList"),ceCard=document.getElementById("ceCard");
+ if(!cardsList||!ceCard)return;
+ const today=iso(new Date());
  cardsList.innerHTML=D.cards.length?D.cards.map(c=>{
-   const pending=D.cardExpenses.filter(x=>x.cardId===c.id&&cardDueDate(x)>=iso(new Date())).reduce((a,x)=>a+x.amount,0);
-   return `<div class="cardTile"><div class="cardTileHead"><div><h3>💳 ${escapeHtml(c.name)}</h3><div class="sub">Saldo mensile il giorno ${c.settleDay}</div></div><div style="text-align:right"><div class="cardTotal">${euro(pending)}</div><div class="sub">Da addebitare</div></div></div><button class="danger smallBtn" onclick="delCard('${c.id}')">Elimina carta</button></div>`;
+   const upcoming=D.cardExpenses.filter(x=>x.cardId===c.id&&cardDueDate(x)>=today);
+   const nextDue=upcoming.map(cardDueDate).sort()[0];
+   const nextTotal=nextDue?upcoming.filter(x=>cardDueDate(x)===nextDue).reduce((a,x)=>a+(Number(x.amount)||0),0):0;
+   const closing=Number(c.closingDay ?? c.settleDay)||1;
+   const debit=Number(c.debitDay)||closing;
+   return `<div class="cardTile"><div class="cardTileHead"><div><h3>💳 ${escapeHtml(c.name)}</h3><div class="sub">Chiusura il ${closing} · addebito il ${debit}</div>${nextDue?`<div class="sub">Prossimo addebito: ${nextDue.split("-").reverse().join("/")}</div>`:"<div class=\"sub\">Nessun addebito futuro registrato</div>"}</div><div style="text-align:right"><div class="cardTotal">${euro(nextTotal)}</div><div class="sub">Prossimo addebito</div></div></div><button class="danger smallBtn" onclick="delCard('${c.id}')">Elimina carta</button></div>`;
  }).join(""):'<div class="empty">Aggiungi la tua prima carta qui sopra.</div>';
- ceCard.innerHTML=D.cards.length?D.cards.map(c=>`<option value="${c.id}">${escapeHtml(c.name)} · saldo il ${c.settleDay}</option>`).join(""):'<option value="">Aggiungi prima una carta</option>';
- const expenses=[...D.cardExpenses].sort((a,b)=>cardDueDate(a).localeCompare(cardDueDate(b))||b.date.localeCompare(a.date));
- expensesList.innerHTML=expenses.length?expenses.map(x=>{
-   const due=cardDueDate(x),settled=due<=iso(new Date()),card=cardById(x.cardId);
-   return `<div class="item"><div><b>${escapeHtml(x.desc||x.cat||"Acquisto con carta")}</b><div class="muted">${escapeHtml(card?card.name:"Carta eliminata")} · acquisto ${x.date}</div><div class="muted">Saldo previsto: ${due} · ${settled?"Addebito conteggiato":"In attesa"}</div><button class="danger smallBtn" onclick="delCardExpense('${x.id}')">Elimina</button></div><div style="text-align:right"><div class="amount">${euro(x.amount)}</div></div></div>`;
- }).join(""):'<div class="empty">Nessun acquisto con carta registrato.</div>';
+ ceCard.innerHTML=D.cards.length?D.cards.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join(""):'<option value="">Aggiungi prima una carta</option>';
 }
 function escapeHtml(v){return String(v??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
 function addCard(){
- const name=document.getElementById("cn").value.trim(),settleDay=Number(document.getElementById("csd").value)||10;
+ const name=document.getElementById("cn").value.trim();
+ const closingDay=Number(document.getElementById("cclose").value)||21;
+ const debitDay=Number(document.getElementById("cdebit").value)||5;
  if(!name)return toast("Inserisci il nome della carta");
- D.cards.push({id:id(),name,settleDay});document.getElementById("cn").value="";save();toast("Carta aggiunta");
+ if(D.cards.some(c=>String(c.name||"").trim().toLowerCase()===name.toLowerCase()))return toast("Questa carta è già presente");
+ D.cards.push({id:id(),name,closingDay,debitDay});
+ document.getElementById("cn").value="";save();toast("Carta aggiunta");
 }
 function addCardExpense(){
- const cardId=document.getElementById("ceCard").value,date=document.getElementById("ced").value,amount=Number(document.getElementById("cea").value),desc=document.getElementById("cex").value.trim(),cat=document.getElementById("cec").value;
+ const cardId=document.getElementById("ceCard").value,date=document.getElementById("ced").value||iso(new Date()),amount=Math.round(Number(document.getElementById("cea").value)*100)/100,desc=document.getElementById("cex").value.trim();
  if(!cardId||!cardById(cardId))return toast("Aggiungi o seleziona una carta");
- if(!date||!(amount>0))return toast("Inserisci data e importo");
- D.cardExpenses.push({id:id(),cardId,date,amount,desc:desc||cat,cat});document.getElementById("cea").value="";document.getElementById("cex").value="";save();toast("Acquisto registrato: verrà scalato al saldo");
+ if(!(amount>0))return toast("Inserisci un importo valido");
+ D.cardExpenses.push({id:id(),cardId,date,amount,desc:desc||"Acquisto con carta"});
+ document.getElementById("cea").value="";document.getElementById("cex").value="";save();toast("Spesa registrata e disponibilità aggiornata");
 }
 function delCard(i){if(!confirm("Eliminare la carta? Gli acquisti registrati resteranno nello storico."))return;D.cards=D.cards.filter(c=>c.id!==i);save()}
 function delCardExpense(i){if(confirm("Eliminare questo acquisto con carta?")){D.cardExpenses=D.cardExpenses.filter(x=>x.id!==i);save()}}
@@ -717,15 +731,28 @@ function resetData(){
 function fill(){
  document.getElementById("mc").innerHTML=cats.map(x=>`<option>${x}</option>`).join("");
  document.getElementById("fc").innerHTML=fcats.map(x=>`<option>${x}</option>`).join("");
-  document.getElementById("cec").innerHTML=cats.filter(x=>x!=="Stipendio"&&x!=="Rimborso").map(x=>`<option>${x}</option>`).join("");
-  document.getElementById("csd").innerHTML=Array.from({length:31},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join("");
-  document.getElementById("csd").value="10";
+  const cardDays=Array.from({length:31},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join("");
+  document.getElementById("cclose").innerHTML=cardDays;
+  document.getElementById("cdebit").innerHTML=cardDays;
+  document.getElementById("cclose").value="21";
+  document.getElementById("cdebit").value="5";
  let ms=["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
  document.getElementById("sm").innerHTML=ms.map((x,i)=>`<option value="${i+1}">${x}</option>`).join("");
  document.getElementById("pd").innerHTML=Array.from({length:31},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join("");
  document.getElementById("sy").value=D.s.y;document.getElementById("sm").value=D.s.m;document.getElementById("si").value=D.s.i;
  document.getElementById("st").value=DEFAULT_SAVINGS;document.getElementById("pd").value=D.s.payDay||10;
  document.getElementById("md").value=iso(new Date());document.getElementById("fd").value=iso(new Date());document.getElementById("ced").value=iso(new Date());
+ // Configurazione iniziale delle tre carte: una sola volta, senza azzerare dati o acquisti.
+ if(!D.cardSetupV1){
+   const defaults=[["Hello! Card",21,5],["Amex",20,5],["Conad",30,10]];
+   defaults.forEach(([name,closingDay,debitDay])=>{
+     let c=D.cards.find(x=>String(x.name||"").trim().toLowerCase()===name.toLowerCase());
+     if(c){c.closingDay=closingDay;c.debitDay=debitDay;}
+     else D.cards.push({id:id(),name,closingDay,debitDay});
+   });
+   D.cardSetupV1=true;
+   localStorage.setItem(key,JSON.stringify(D));
+ }
 }
 fill();render();
 </script>
