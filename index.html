@@ -534,19 +534,24 @@ function calc(){
  // La spesa con carta è già sottratta alla data d'acquisto: non riservarla
  // una seconda volta al giorno dell'addebito.
  const cardReserved=0;
- const todaySpent=D.moves.filter(x=>x.type==="Spesa"&&x.date===todayIso).reduce((a,x)=>a+(Number(x.amount)||0),0)
-   +D.cardExpenses.filter(x=>x.date===todayIso).reduce((a,x)=>a+(Number(x.amount)||0),0);
+ // Solo le spese in contanti/conto registrate nei movimenti riducono direttamente
+ // lo spendibile di oggi. Gli acquisti con carta riducono già il saldo reale (bal),
+ // ma NON vanno sottratti una seconda volta come spesa giornaliera: devono solo
+ // far ricalcolare la quota giornaliera in base al nuovo budget residuo.
+ const todayCashSpent=D.moves.filter(x=>x.type==="Spesa"&&x.date===todayIso).reduce((a,x)=>a+(Number(x.amount)||0),0);
+ const todayCardSpent=D.cardExpenses.filter(x=>x.date===todayIso).reduce((a,x)=>a+(Number(x.amount)||0),0);
+ const todaySpent=todayCashSpent;
  const protectedSavings=getAutoSavings();
  const todayMidnight=new Date(now.getFullYear(),now.getMonth(),now.getDate());
  const remain=Math.max(1,Math.round((end-todayMidnight)/86400000)+1);
- // Ricostruisce il budget all'inizio della giornata: il saldo include già le uscite di oggi,
- // quindi le riaggiungiamo prima di calcolare la quota e sottraiamo poi l'intero speso oggi.
- const balanceBeforeToday=bal+todaySpent;
+ // Ricostruisce il budget prima delle sole spese cash di oggi. Le spese carta
+ // restano invece già sottratte da bal e incidono soltanto sul ricalcolo della quota.
+ const balanceBeforeToday=bal+todayCashSpent;
  const spendableBeforeToday=Math.max(0,balanceBeforeToday-commitments-cardReserved-protectedSavings);
  const dailyQuota=spendableBeforeToday/remain;
- const daily=Math.max(0,Math.round((dailyQuota-todaySpent)*100)/100);
+ const daily=Math.max(0,Math.round((dailyQuota-todayCashSpent)*100)/100);
  const pool=Math.max(0,bal-commitments-cardReserved-protectedSavings);
- return {inc,sp,paid,cardSettled,cardReserved,bal,commitments,daily,remain,endIso,todaySpent,protectedSavings,spendablePool:pool};
+ return {inc,sp,paid,cardSettled,cardReserved,bal,commitments,daily,remain,endIso,todaySpent,todayCardSpent,protectedSavings,spendablePool:pool};
 }
 
 function render(){
