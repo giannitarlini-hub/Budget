@@ -302,19 +302,6 @@ input,select,textarea{background:rgba(255,255,255,.92)!important;border-color:rg
   #home>.hero{padding:20px 17px}
 }
 
-\n/* MENU 3D DIVERTENTE — solo grafica e navigazione, calcoli invariati */
-.menu-title{display:flex;align-items:center;gap:9px;margin:20px 2px 11px;color:#10386b}
-.menu-title h2{margin:0;font-size:20px}
-.fun-menu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 16px}
-.fun-tile{position:relative;display:flex;align-items:center;gap:12px;text-align:left;width:100%;min-height:105px;padding:13px 12px;border-radius:22px;color:#16345d;border:1px solid rgba(255,255,255,.92);background:linear-gradient(145deg,#fff 0%,#f3f8ff 100%);box-shadow:0 8px 0 #c8d9ef,0 12px 20px rgba(28,70,125,.14),inset 0 2px 0 #fff;overflow:hidden}
-.fun-tile:before{content:"";position:absolute;inset:0;background:linear-gradient(120deg,rgba(255,255,255,.58),transparent 48%);pointer-events:none}
-.fun-tile:active{transform:translateY(5px) scale(.985);box-shadow:0 3px 0 #c8d9ef,0 6px 12px rgba(28,70,125,.12)}
-.fun-icon{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 57px;height:57px;border-radius:18px;font-size:32px;line-height:1;filter:drop-shadow(0 4px 1px rgba(20,45,80,.14));box-shadow:inset 0 3px 2px rgba(255,255,255,.75),inset 0 -4px 0 rgba(0,0,0,.08),0 5px 9px rgba(20,50,90,.13);transform:rotate(-4deg)}
-.fun-tile:nth-child(2) .fun-icon,.fun-tile:nth-child(4) .fun-icon,.fun-tile:nth-child(6) .fun-icon{transform:rotate(4deg)}
-.fun-icon.blue{background:linear-gradient(145deg,#9ee7ff,#4b9dff)}.fun-icon.pink{background:linear-gradient(145deg,#ffc1d9,#ff78a9)}.fun-icon.green{background:linear-gradient(145deg,#b9f7c8,#4bd78b)}.fun-icon.yellow{background:linear-gradient(145deg,#fff0a3,#ffbf3e)}.fun-icon.purple{background:linear-gradient(145deg,#dfc7ff,#a78bfa)}.fun-icon.orange{background:linear-gradient(145deg,#ffd2a1,#ff914d)}
-.fun-copy{position:relative;min-width:0}.fun-copy strong{display:block;font-size:13px;line-height:1.2;font-weight:850;letter-spacing:-.2px}.fun-copy small{display:block;margin-top:5px;font-size:10.5px;line-height:1.3;color:#617590;font-weight:600}.fun-arrow{position:absolute;right:9px;bottom:7px;font-size:14px;color:#7290b7}
-@media(max-width:370px){.fun-tile{gap:8px;padding:10px;min-height:96px}.fun-icon{flex-basis:47px;height:47px;font-size:27px;border-radius:15px}.fun-copy strong{font-size:12px}.fun-copy small{font-size:10px}}
-
 </style>
 </head>
 <body>
@@ -328,16 +315,6 @@ input,select,textarea{background:rgba(255,255,255,.92)!important;border-color:rg
 <div class="heroMini"><div class="muted">Budget per spese</div><div class="v" id="spendablePool"></div></div>
 <div class="heroMini"><div class="muted">Fine ciclo</div><div class="v" id="cycleEndLabel"></div></div>
 </div></div>
-
-<div class="menu-title"><span style="font-size:22px">🎮</span><h2>Il tuo menu</h2></div>
-<div class="fun-menu" aria-label="Menu principale">
-  <button class="fun-tile" onclick="go('add')" aria-label="Registra un movimento"><span class="fun-icon blue">👛</span><span class="fun-copy"><strong>Nuovo movimento</strong><small>Registra entrate e spese</small></span><span class="fun-arrow">↗</span></button>
-  <button class="fun-tile" onclick="go('list')" aria-label="Apri lo storico movimenti"><span class="fun-icon pink">🛒</span><span class="fun-copy"><strong>I miei movimenti</strong><small>Guarda dove vanno i soldi</small></span><span class="fun-arrow">↗</span></button>
-  <button class="fun-tile" onclick="go('future')" aria-label="Apri le uscite future"><span class="fun-icon yellow">📅</span><span class="fun-copy"><strong>Uscite future</strong><small>Non farti sorprendere</small></span><span class="fun-arrow">↗</span></button>
-  <button class="fun-tile" onclick="go('cards')" aria-label="Apri carte e addebiti"><span class="fun-icon purple">💳</span><span class="fun-copy"><strong>Carte e addebiti</strong><small>Controlla i prossimi pagamenti</small></span><span class="fun-arrow">↗</span></button>
-  <button class="fun-tile" onclick="document.querySelector('.savings').scrollIntoView({behavior:'smooth',block:'center'})" aria-label="Vai al risparmio protetto"><span class="fun-icon green">🐷</span><span class="fun-copy"><strong>Risparmio protetto</strong><small>Il tuo gruzzoletto cresce</small></span><span class="fun-arrow">↓</span></button>
-  <button class="fun-tile" onclick="go('settings')" aria-label="Apri impostazioni"><span class="fun-icon orange">🕶️</span><span class="fun-copy"><strong>La cabina di comando</strong><small>Budget, ciclo e backup</small></span><span class="fun-arrow">↗</span></button>
-</div>
 
 <div class="grid">
 <div class="metric"><div class="muted">Spendibile oggi</div><b id="daily"></b></div>
