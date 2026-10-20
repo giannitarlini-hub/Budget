@@ -302,6 +302,23 @@ input,select,textarea{background:rgba(255,255,255,.92)!important;border-color:rg
   #home>.hero{padding:20px 17px}
 }
 
+
+
+/* SOLO GRAFICA: icone decorative 3D, nessuna modifica a dati o calcoli */
+.metric, .heroMini, .card.savings, .card.affordability { position: relative; }
+.metric { padding-top: 18px; }
+.metric::before { display:block; font-size:25px; line-height:1; margin-bottom:10px; filter: drop-shadow(0 4px 3px rgba(0,0,0,.22)); }
+.grid .metric:nth-child(1)::before { content:"💰"; }
+.grid .metric:nth-child(2)::before { content:"🛍️"; }
+.grid .metric:nth-child(3)::before { content:"💵"; }
+.grid .metric:nth-child(4)::before { content:"📅"; }
+.card.savings .sectionHead h2::before { content:"🐷  "; font-size:1.25em; filter: drop-shadow(0 3px 2px rgba(0,0,0,.25)); }
+.card.affordability .sectionHead h2::before { content:"🧮  "; font-size:1.15em; filter: drop-shadow(0 3px 2px rgba(0,0,0,.25)); }
+#home > .card:not(.hero):not(.savings):not(.affordability) > h2::before { content:"✨  "; filter: drop-shadow(0 3px 2px rgba(0,0,0,.22)); }
+.top button { box-shadow: 0 5px 0 rgba(0,0,0,.14), 0 8px 14px rgba(0,0,0,.12); transform: translateY(0); }
+button { transition: transform .12s ease, box-shadow .12s ease; }
+button:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,.12); }
+
 </style>
 </head>
 <body>
