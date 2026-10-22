@@ -358,6 +358,7 @@ button:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,.12);
 </div>
 
 <div class="card"><h2>Prossime uscite</h2><div id="next"></div></div>
+<div class="card"><h2>Addebiti futuri carta</h2><div class="muted">Acquisti dopo la chiusura: non riducono lo spendibile del ciclo attuale; vengono conteggiati quando arriva la data di addebito.</div><div id="futureCardDebits"></div></div>
 <div class="card"><h2>Ultimi movimenti</h2><div id="recent"></div></div>
 </section>
 
@@ -501,6 +502,13 @@ function cardDueDate(expense){
  const monthsAhead=d<=closingDate?1:2;
  return iso(payDate(d.getFullYear(),d.getMonth()+monthsAhead,debitDay));
 }
+// Un acquisto oltre la chiusura viene contabilizzato nel budget alla data di addebito.
+// Gli acquisti entro la chiusura continuano invece a ridurre subito il budget alla data d'acquisto.
+function cardPurchaseAfterClosing(expense){
+ const card=cardById(expense.cardId);
+ if(!card || card.closingDay==null || card.debitDay==null)return false;
+ return dt(expense.date).getDate()>Math.min(31,Math.max(1,Number(card.closingDay)||1));
+}
 
 /* RISPARMIO AUTOMATICO
    - primo avvio: protegge subito 200 € (o il valore impostato)
@@ -545,7 +553,12 @@ function calc(){
  const inc=m.filter(x=>x.type==="Entrata").reduce((a,x)=>a+(Number(x.amount)||0),0);
  const sp=m.filter(x=>x.type==="Spesa").reduce((a,x)=>a+(Number(x.amount)||0),0);
  const paid=D.future.filter(x=>x.paid&&inCycle(x.date)).reduce((a,x)=>a+(Number(x.amount)||0),0);
- const cardSettled=D.cardExpenses.filter(x=>inCycle(x.date)).reduce((a,x)=>a+(Number(x.amount)||0),0);
+ const cardSettled=D.cardExpenses.filter(x=>{
+   // Acquisti entro la chiusura: impattano subito alla data d'acquisto.
+   if(!cardPurchaseAfterClosing(x))return inCycle(x.date);
+   // Acquisti dopo la chiusura: impattano solo nel ciclo che contiene l'addebito.
+   return inCycle(cardDueDate(x));
+ }).reduce((a,x)=>a+(Number(x.amount)||0),0);
  const bal=(Number(D.s.i)||0)+inc-sp-paid-cardSettled;
  const commitments=D.future.filter(x=>!x.paid&&x.date>=todayIso&&x.date<=endIso).reduce((a,x)=>a+(Number(x.amount)||0),0);
  // La spesa con carta è già sottratta alla data d'acquisto: non riservarla
@@ -591,6 +604,7 @@ function render(){
 
  let next=[...D.future].filter(x=>!x.paid&&x.date>=iso(new Date())).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,5);
  document.getElementById("next").innerHTML=next.length?next.map(x=>itemFuture(x,false)).join(""):'<div class="empty">Nessuna uscita imminente</div>';
+ renderFutureCardDebits();
  let rec=[...D.moves].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);
  document.getElementById("recent").innerHTML=rec.length?rec.map(itemMove).join(""):'<div class="empty">Nessun movimento</div>';
  let all=[...D.moves.filter(x=>inMonth(x.date))].sort((a,b)=>b.date.localeCompare(a.date));
@@ -599,6 +613,19 @@ function render(){
  document.getElementById("allFuture").innerHTML=fut.length?fut.map(x=>itemFuture(x,true)).join(""):'<div class="empty">Nessuna uscita</div>';
  // Aggiorna anche la sezione Carte dopo ogni salvataggio, così le carte registrate compaiono subito.
  renderCards();
+}
+
+function renderFutureCardDebits(){
+ const el=document.getElementById("futureCardDebits");
+ if(!el)return;
+ const today=iso(new Date());
+ const deferred=D.cardExpenses.filter(x=>cardPurchaseAfterClosing(x)&&cardDueDate(x)>today);
+ if(!deferred.length){el.innerHTML='<div class="empty">Nessun addebito futuro da acquisti dopo la chiusura.</div>';return;}
+ const groups={};
+ deferred.forEach(x=>{const due=cardDueDate(x);groups[due]=(groups[due]||0)+(Number(x.amount)||0)});
+ const rows=Object.keys(groups).sort().map(due=>`<div class="item"><div><b>Addebito ${due.split("-").reverse().join("/")}</b><div class="muted">Acquisti successivi alla chiusura</div></div><div class="amount">${euro(groups[due])}</div></div>`).join("");
+ const total=deferred.reduce((sum,x)=>sum+(Number(x.amount)||0),0);
+ el.innerHTML=`<div class="savingTop"><div class="muted">Totale da addebitare</div><div class="cardTotal">${euro(total)}</div></div>${rows}`;
 }
 
 function renderCards(){
