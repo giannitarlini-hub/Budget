@@ -392,6 +392,7 @@ button:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,.12);
   <label>Importo (€)</label><input id="cea" type="number" min="0" step=".01" inputmode="decimal" placeholder="0,00">
   <button class="primary" style="width:100%;margin-top:13px" onclick="addCardExpense()">Registra spesa</button>
  </div>
+ <div class="card"><h2>Spese delle carte registrate</h2><div class="muted">Puoi modificare o eliminare ogni acquisto. Le spese vengono rimosse automaticamente quando il ciclo che comprende il loro addebito è terminato.</div><div id="cardExpensesList" style="margin-top:12px"></div></div>
 </section>
 
 <section id="settings" class="screen"><div class="card"><h2>Impostazioni</h2>
@@ -613,6 +614,7 @@ function render(){
  document.getElementById("allFuture").innerHTML=fut.length?fut.map(x=>itemFuture(x,true)).join(""):'<div class="empty">Nessuna uscita</div>';
  // Aggiorna anche la sezione Carte dopo ogni salvataggio, così le carte registrate compaiono subito.
  renderCards();
+ renderCardExpenses();
 }
 
 function renderFutureCardDebits(){
@@ -628,6 +630,32 @@ function renderFutureCardDebits(){
  el.innerHTML=`<div class="savingTop"><div class="muted">Totale da addebitare</div><div class="cardTotal">${euro(total)}</div></div>${rows}`;
 }
 
+function renderCardExpenses(){
+ const el=document.getElementById("cardExpensesList");
+ if(!el)return;
+ // Conserva le spese fino alla fine del ciclo in cui viene effettuato l'addebito.
+ // In questo modo restano visibili e modificabili, ma non si accumulano per sempre.
+ const start=cycleStartDate();
+ const before=D.cardExpenses.length;
+ D.cardExpenses=D.cardExpenses.filter(x=>dt(cardDueDate(x))>=start);
+ if(D.cardExpenses.length!==before)localStorage.setItem(key,JSON.stringify(D));
+ const entries=[...D.cardExpenses].sort((a,b)=>b.date.localeCompare(a.date));
+ if(!entries.length){el.innerHTML='<div class="empty">Nessuna spesa carta nel ciclo attuale o in un ciclo di addebito futuro.</div>';return;}
+ el.innerHTML=entries.map(x=>{
+   const card=cardById(x.cardId),due=cardDueDate(x);
+   return `<div class="item"><div style="min-width:0;flex:1"><b>${escapeHtml(x.desc||"Acquisto con carta")}</b><div class="muted">${escapeHtml(card?card.name:"Carta non disponibile")} · Acquisto ${x.date.split("-").reverse().join("/")}</div><div class="muted">Addebito previsto ${due.split("-").reverse().join("/")}</div></div><div style="text-align:right"><div class="amount">${euro(x.amount)}</div><div style="display:flex;gap:6px;justify-content:flex-end;margin-top:6px"><button class="smallBtn" onclick="editCardExpense('${x.id}')">Modifica</button><button class="danger smallBtn" onclick="delCardExpense('${x.id}')">Elimina</button></div></div></div>`;
+ }).join("");
+}
+function editCardExpense(expenseId){
+ const x=D.cardExpenses.find(e=>e.id===expenseId);if(!x)return;
+ const desc=prompt("Descrizione della spesa:",x.desc||"");if(desc===null)return;
+ const date=prompt("Data acquisto (AAAA-MM-GG):",x.date);if(date===null)return;
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(dt(date).getTime()))return toast("Data non valida. Usa AAAA-MM-GG");
+ const amountText=prompt("Importo in euro:",String(x.amount));if(amountText===null)return;
+ const amount=Math.round(Number(amountText.replace(",","."))*100)/100;if(!(amount>0))return toast("Importo non valido");
+ x.desc=desc.trim()||"Acquisto con carta";x.date=date;x.amount=amount;
+ save();toast("Spesa carta aggiornata");
+}
 function renderCards(){
  const cardsList=document.getElementById("cardsList"),ceCard=document.getElementById("ceCard");
  if(!cardsList||!ceCard)return;
