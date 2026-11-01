@@ -663,6 +663,8 @@ function cardDueDate(expense){
  }
  const closingDay=Math.min(31,Math.max(1,Number(card.closingDay)||1));
  const debitDay=Math.min(31,Math.max(1,Number(card.debitDay)||1));
+ // Il giorno 31 rappresenta l'ultimo giorno effettivo del mese:
+ // payDate lo adatta automaticamente anche a febbraio e ai mesi da 30 giorni.
  const closingDate=payDate(d.getFullYear(),d.getMonth(),closingDay);
  const monthsAhead=d<=closingDate?1:2;
  return iso(payDate(d.getFullYear(),d.getMonth()+monthsAhead,debitDay));
@@ -672,7 +674,10 @@ function cardDueDate(expense){
 function cardPurchaseAfterClosing(expense){
  const card=cardById(expense.cardId);
  if(!card || card.closingDay==null || card.debitDay==null)return false;
- return dt(expense.date).getDate()>Math.min(31,Math.max(1,Number(card.closingDay)||1));
+ const purchaseDate=dt(expense.date);
+ const closingDay=Math.min(31,Math.max(1,Number(card.closingDay)||1));
+ const closingDate=payDate(purchaseDate.getFullYear(),purchaseDate.getMonth(),closingDay);
+ return purchaseDate>closingDate;
 }
 
 /* RISPARMIO AUTOMATICO
@@ -828,9 +833,11 @@ function renderCards(){
    const upcoming=D.cardExpenses.filter(x=>x.cardId===c.id&&cardDueDate(x)>=today);
    const nextDue=upcoming.map(cardDueDate).sort()[0];
    const nextTotal=nextDue?upcoming.filter(x=>cardDueDate(x)===nextDue).reduce((a,x)=>a+(Number(x.amount)||0),0):0;
+   const isConad=String(c.name||"").trim().toLowerCase()==="conad";
    const closing=Number(c.closingDay ?? c.settleDay)||1;
    const debit=Number(c.debitDay)||closing;
-   return `<div class="cardTile"><div class="cardTileHead"><div><h3>💳 ${escapeHtml(c.name)}</h3><div class="sub">Chiusura il ${closing} · addebito il ${debit}</div>${nextDue?`<div class="sub">Prossimo addebito: ${nextDue.split("-").reverse().join("/")}</div>`:"<div class=\"sub\">Nessun addebito futuro registrato</div>"}</div><div style="text-align:right"><div class="cardTotal">${euro(nextTotal)}</div><div class="sub">Prossimo addebito</div></div></div><button class="danger smallBtn" onclick="delCard('${c.id}')">Elimina carta</button></div>`;
+   const closingLabel=isConad||closing===31?"ultimo giorno del mese":String(closing);
+   return `<div class="cardTile"><div class="cardTileHead"><div><h3>💳 ${escapeHtml(c.name)}</h3><div class="sub">Chiusura ${closingLabel} · addebito il ${debit}</div>${nextDue?`<div class="sub">Prossimo addebito: ${nextDue.split("-").reverse().join("/")}</div>`:"<div class=\"sub\">Nessun addebito futuro registrato</div>"}</div><div style="text-align:right"><div class="cardTotal">${euro(nextTotal)}</div><div class="sub">Prossimo addebito</div></div></div><button class="danger smallBtn" onclick="delCard('${c.id}')">Elimina carta</button></div>`;
  }).join(""):'<div class="empty">Aggiungi la tua prima carta qui sopra.</div>';
  ceCard.innerHTML=D.cards.length?D.cards.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join(""):'<option value="">Aggiungi prima una carta</option>';
 }
@@ -985,15 +992,22 @@ function fill(){
  document.getElementById("md").value=iso(new Date());document.getElementById("fd").value=iso(new Date());document.getElementById("ced").value=iso(new Date());
  // Configurazione iniziale delle tre carte: una sola volta, senza azzerare dati o acquisti.
  if(!D.cardSetupV1){
-   const defaults=[["Hello! Card",21,5],["Amex",20,5],["Conad",30,10]];
+   const defaults=[["Hello! Card",21,5],["Amex",20,5],["Conad",31,10]];
    defaults.forEach(([name,closingDay,debitDay])=>{
      let c=D.cards.find(x=>String(x.name||"").trim().toLowerCase()===name.toLowerCase());
      if(c){c.closingDay=closingDay;c.debitDay=debitDay;}
      else D.cards.push({id:id(),name,closingDay,debitDay});
    });
    D.cardSetupV1=true;
-   localStorage.setItem(key,JSON.stringify(D));
  }
+ // Migrazione sicura: aggiorna SOLO la Conad anche nelle installazioni già configurate.
+ // Non tocca movimenti, acquisti, saldo, risparmi o impostazioni delle altre carte.
+ const conadCard=D.cards.find(x=>String(x.name||"").trim().toLowerCase()==="conad");
+ if(conadCard){
+   conadCard.closingDay=31; // 31 = ultimo giorno effettivo di ogni mese
+   conadCard.debitDay=10;
+ }
+ localStorage.setItem(key,JSON.stringify(D));
 }
 fill();render();
 </script>
