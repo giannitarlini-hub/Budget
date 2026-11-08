@@ -484,6 +484,136 @@ label{color:#f5f5f5!important}
 .amount.green,.green{color:#80f0b0!important}.amount.red,.red{color:#ff7e88!important}
 @media(max-width:600px){body{background-attachment:scroll!important}}
 </style>
+
+<style>
+/* TEMA BLU + VERDE — modifica esclusivamente la presentazione */
+:root{
+  color-scheme:light;
+  --bg:#f2f6fc;
+  --card:#ffffff;
+  --text:#172b4d;
+  --muted:#667b98;
+  --line:#dce6f2;
+  --accent:#1d5fae;
+  --accent2:#164780;
+  --green:#13845b;
+  --red:#c74355;
+  --yellow:#a96d12;
+  --shadow:0 9px 28px rgba(24,57,99,.075);
+}
+html,body{
+  min-height:100%;
+  background:#f2f6fc!important;
+  color:var(--text)!important;
+}
+body{
+  background:
+    radial-gradient(ellipse at 8% 0%,rgba(66,133,214,.12),transparent 35%),
+    linear-gradient(160deg,#f7faff 0%,#edf3fa 55%,#f7faff 100%)!important;
+  background-attachment:fixed!important;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;
+}
+body,body *{text-shadow:none!important}
+.top{
+  background:rgba(255,255,255,.92)!important;
+  border:1px solid #e0e9f4!important;
+  border-radius:20px!important;
+  box-shadow:var(--shadow)!important;
+}
+.top h1,h1,h2,h3,h4,h5,h6,
+.sectionHead h2,.cardTile h3{color:#173b68!important}
+.top p,.muted,.sub,.hint,.help,.small,.note,.sim-label,.empty,
+.cardTile .sub,.hero .muted{color:var(--muted)!important}
+.card,.panel,.section,.box,.item,.transaction,.stat,.summary,.tile,
+.modal-content,.cardTile,.sim-box,.afford-sim,.savings,.affordability,.metric{
+  background:#fff!important;
+  color:var(--text)!important;
+  border:1px solid var(--line)!important;
+  border-radius:19px!important;
+  box-shadow:var(--shadow)!important;
+}
+.hero,#home>.hero{
+  background:linear-gradient(135deg,#12345b 0%,#1b5797 58%,#2875b9 100%)!important;
+  color:#fff!important;
+  border:1px solid rgba(255,255,255,.25)!important;
+  box-shadow:0 13px 30px rgba(22,69,119,.2)!important;
+}
+.hero *,.hero .muted,.hero p,.hero b,.hero strong{color:#fff!important}
+.heroMini{background:rgba(255,255,255,.12)!important;border:1px solid rgba(255,255,255,.2)!important}
+.metric:nth-child(1){background:#edf4ff!important;border-color:#cbdcf3!important}
+.metric:nth-child(2){background:#fff!important;border-color:var(--line)!important}
+.metric:nth-child(3){background:#eff9f4!important;border-color:#cce8da!important}
+.metric:nth-child(4){background:#f5f8fc!important;border-color:var(--line)!important}
+button,.btn{
+  color:#fff!important;
+  border:1px solid transparent!important;
+  border-radius:13px!important;
+  background:linear-gradient(135deg,#2168b5,#174b83)!important;
+  box-shadow:0 5px 12px rgba(29,83,140,.16)!important;
+  font-weight:750!important;
+}
+button.primary,.primary,.fab{
+  background:linear-gradient(135deg,#246fbd,#174d87)!important;
+  color:#fff!important;
+}
+button.light,.light,.top button,.top .light{
+  background:#edf4fc!important;
+  color:#1c548d!important;
+  border:1px solid #d7e4f2!important;
+  box-shadow:none!important;
+}
+button.danger,.danger{
+  background:#fff0f1!important;color:#b42336!important;
+  border:1px solid #f3d0d5!important;box-shadow:none!important;
+}
+input,select,textarea,input:focus,select:focus,textarea:focus{
+  color:#172b4d!important;
+  background:#fff!important;
+  border:1px solid #d4e0ee!important;
+  border-radius:12px!important;
+  box-shadow:none!important;
+}
+input::placeholder,textarea::placeholder{color:#93a3b8!important;opacity:1!important}
+label{color:#435b7b!important;font-weight:750!important}
+.seg{background:#edf3fa!important;border:1px solid #dce6f2!important}
+.seg button{background:transparent!important;color:#536b89!important;box-shadow:none!important}
+.seg .on{background:#fff!important;color:#1b568f!important;box-shadow:0 2px 7px rgba(25,64,108,.12)!important}
+.pill{background:#eaf2fc!important;color:#1c548d!important;border:1px solid #d7e5f5!important}
+.pill.yes,.affordResult.yes{background:#e6f6ee!important;color:#11734f!important;border-color:#c8ead8!important}
+.pill.no,.affordResult.no{background:#fff0f1!important;color:#b42336!important;border-color:#f3d0d5!important}
+.pill.warn,.affordResult.warn{background:#fff6e5!important;color:#93600b!important;border-color:#f2e1b9!important}
+.green,.amount.green,.savingValue,.cardTotal{color:#13845b!important}
+.red,.amount.red{color:#c74355!important}
+.savings,.affordability{background:linear-gradient(145deg,#fff,#f5f9ff)!important;border-color:#d9e6f5!important}
+.progress{background:#e5edf5!important}
+.progress>span{background:linear-gradient(90deg,#147b59,#39a879)!important}
+.nav{
+  background:rgba(255,255,255,.96)!important;
+  border-top:1px solid #dce6f2!important;
+  box-shadow:0 -7px 22px rgba(24,57,99,.09)!important;
+}
+.nav button{
+  background:transparent!important;color:#6b7d96!important;
+  border:1px solid transparent!important;box-shadow:none!important;
+}
+.nav button.on{
+  background:#eaf2fc!important;color:#1b568f!important;
+  border-color:#d7e5f5!important;
+}
+.fab{
+  border:3px solid #fff!important;
+  box-shadow:0 9px 22px rgba(22,76,132,.25)!important;
+}
+.cardTile{background:#fff!important}
+.cardTile .sub{color:var(--muted)!important}
+.item{border-bottom-color:#e5edf5!important}
+.toast{background:#173b68!important;color:#fff!important}
+@media(max-width:600px){
+  body{background-attachment:scroll!important}
+}
+@media(prefers-reduced-motion:reduce){button,.btn{transition:none!important}}
+</style>
+
 </head>
 <body>
 <main class="app">
