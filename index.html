@@ -497,6 +497,12 @@ label{color:#f5f5f5!important}
 <div class="heroMini"><div class="muted">Data previsione</div><div class="v" id="cycleEndLabel"></div></div>
 </div></div>
 
+<div class="card" id="dailyCard">
+<div class="sectionHead"><h2>Spendibile quotidiano</h2><span class="pill">OGGI</span></div>
+<div class="big" id="daily"></div>
+<div class="muted">Quanto puoi spendere al giorno, considerando la previsione del ciclo e il risparmio protetto.</div>
+</div>
+
 <div class="card">
 <div class="sectionHead"><h2>Prossimo accredito e addebiti</h2><span class="pill">PREVISIONE</span></div>
 <div class="muted" style="margin-bottom:12px">Previsione fino al <b id="forecastDate"></b></div>
@@ -541,19 +547,20 @@ label{color:#f5f5f5!important}
 <section id="cards" class="screen">
  <div class="card">
   <div class="sectionHead"><h2>Le mie carte</h2><span class="pill">CARTE</span></div>
-  <div class="muted">Registra qui gli acquisti: il loro importo viene considerato nella previsione solo alla data di addebito. Qui vedi il prossimo addebito di ogni carta.</div>
+  <div class="muted">Questa sezione serve per registrare gli acquisti pagati con carta e vedere in quale mese verranno addebitati. La spesa non riduce il mese dell'acquisto: incide sul mese dell'addebito.</div>
   <label>Nome carta</label><input id="cn" placeholder="Es. Visa principale">
   <div class="row"><div><label>Giorno chiusura</label><select id="cclose"></select></div><div><label>Giorno addebito</label><select id="cdebit"></select></div></div>
   <button class="primary" style="width:100%;margin-top:13px" onclick="addCard()">Aggiungi carta</button>
   <div id="cardsList" style="margin-top:14px"></div>
  </div>
- <div class="card">
-  <h2>＋ Aggiungi una spesa</h2>
+ <div class="card" id="cardPaymentEntry">
+  <div class="sectionHead"><h2>＋ Registra pagamento con carta</h2><span class="pill">NUOVO ACQUISTO</span></div>
+  <div class="muted">Inserisci qui ogni acquisto pagato con una carta. Il gestionale calcola automaticamente quando verrà addebitato e lo considera nel mese corretto.</div>
   <label>Carta utilizzata</label><select id="ceCard"></select>
-  <label>Data acquisto</label><input id="ced" type="date">
+  <label>Data del pagamento</label><input id="ced" type="date">
   <label>Descrizione (facoltativa)</label><input id="cex" placeholder="Es. Spesa supermercato">
-  <label>Importo (€)</label><input id="cea" type="number" min="0" step=".01" inputmode="decimal" placeholder="0,00">
-  <button class="primary" style="width:100%;margin-top:13px" onclick="addCardExpense()">Registra spesa</button>
+  <label>Importo pagato (€)</label><input id="cea" type="number" min="0" step=".01" inputmode="decimal" placeholder="0,00">
+  <button class="primary" style="width:100%;margin-top:13px" onclick="addCardExpense()">Registra pagamento con carta</button>
  </div>
  <div class="card"><h2>Spese delle carte registrate</h2><div class="muted">Puoi modificare o eliminare ogni acquisto. Lo storico degli acquisti viene conservato: puoi modificare o eliminare ogni registrazione.</div><div id="cardExpensesList" style="margin-top:12px"></div></div>
 </section>
@@ -763,6 +770,7 @@ function render(){
  let c=calc();
  document.getElementById("period").textContent=`Ciclo ${String(D.s.payDay).padStart(2,"0")} → ${String(D.s.payDay).padStart(2,"0")}`;
  document.getElementById("balance").textContent=euro(c.actualBalance);
+ document.getElementById("daily").textContent=euro(c.daily);
  document.getElementById("spendablePool").textContent=euro(c.protectedSavings);
  const forecastDate=new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"2-digit"}).format(dt(c.endIso));
  document.getElementById("cycleEndLabel").textContent=forecastDate;
@@ -989,6 +997,7 @@ function resetData(){
  }
 }
 function fill(){
+ document.getElementById("ced").value=iso(new Date());
  document.getElementById("mc").innerHTML=cats.map(x=>`<option>${x}</option>`).join("");
  document.getElementById("fc").innerHTML=fcats.map(x=>`<option>${x}</option>`).join("");
   const cardDays=Array.from({length:31},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join("");
