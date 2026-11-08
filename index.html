@@ -653,8 +653,7 @@ function cardDueDate(expense){
  const card=cardById(expense.cardId);
  if(!card)return expense.date;
  const d=dt(expense.date);
- // Compatibilità con eventuali carte vecchie non ancora configurate:
- // conserva per loro la vecchia regola finché non si impostano i due giorni.
+ // Carte non ancora configurate: compatibilità con la vecchia impostazione.
  if(card.closingDay==null || card.debitDay==null){
    const legacyDay=Math.min(31,Math.max(1,Number(card.settleDay)||10));
    let y=d.getFullYear(),m=d.getMonth();
@@ -663,14 +662,13 @@ function cardDueDate(expense){
  }
  const closingDay=Math.min(31,Math.max(1,Number(card.closingDay)||1));
  const debitDay=Math.min(31,Math.max(1,Number(card.debitDay)||1));
- // Il giorno 31 rappresenta l'ultimo giorno effettivo del mese:
- // payDate lo adatta automaticamente anche a febbraio e ai mesi da 30 giorni.
  const closingDate=payDate(d.getFullYear(),d.getMonth(),closingDay);
+ // Fino alla chiusura inclusa: addebito il mese successivo.
+ // Dal giorno dopo la chiusura: addebito due mesi dopo.
  const monthsAhead=d<=closingDate?1:2;
  return iso(payDate(d.getFullYear(),d.getMonth()+monthsAhead,debitDay));
 }
-// Un acquisto oltre la chiusura viene contabilizzato nel budget alla data di addebito.
-// Gli acquisti entro la chiusura continuano invece a ridurre subito il budget alla data d'acquisto.
+
 function cardPurchaseAfterClosing(expense){
  const card=cardById(expense.cardId);
  if(!card || card.closingDay==null || card.debitDay==null)return false;
@@ -691,22 +689,24 @@ function getAutoSavings(){
  const k=currentCycleKey();
  let st=null;
  try{st=JSON.parse(localStorage.getItem(savingsKey)||"null")}catch(e){}
- // Secondo ciclo già raggiunto: riallinea una sola volta il contatore
- // rimasto a 200 € portandolo a 400 €. Non modifica gli altri dati.
- const fixKey="budget_auto_savings_fix_second_month_v3";
- if(!localStorage.getItem(fixKey) && st && typeof st.saved==="number" && st.saved===200){
+ // Correzione del secondo ciclo: se il contatore risulta ancora 200 €
+ // lo porta a 400 €, anche se una precedente migrazione era già stata segnata.
+ // Accetta sia numeri sia valori numerici salvati come testo.
+ if(st && Number(st.saved)===200){
    st.saved=400;
    st.lastCycle=k;
    localStorage.setItem(savingsKey,JSON.stringify(st));
-   localStorage.setItem(fixKey,"done");
- } else if(!st || typeof st.saved!=="number" || !st.lastCycle){
+ } else if(!st || !Number.isFinite(Number(st.saved)) || !st.lastCycle){
    st={saved:target,lastCycle:k};
- } else if(st.lastCycle!==k){
-   const a=dt(st.lastCycle),b=dt(k);
-   let cycles=(b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth());
-   cycles=Math.max(1,cycles);
-   st.saved+=target*cycles;
-   st.lastCycle=k;
+ } else {
+   st.saved=Number(st.saved);
+   if(st.lastCycle!==k){
+     const a=dt(st.lastCycle),b=dt(k);
+     let cycles=(b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth());
+     cycles=Math.max(1,cycles);
+     st.saved+=target*cycles;
+     st.lastCycle=k;
+   }
  }
  st.saved=Math.max(target,Math.round(st.saved*100)/100);
  localStorage.setItem(savingsKey,JSON.stringify(st));
@@ -714,7 +714,9 @@ function getAutoSavings(){
 }
 
 function calc(){
- // Ricalcola usando sempre la data locale corrente.
+ // Il budget considera ogni acquisto carta nel ciclo che contiene la DATA DI ADDEBITO.
+ // Esempio Hello! (chiusura 21, addebito 5): 18/10 -> 05/11; 22/10 -> 05/12.
+ // La data di acquisto serve solo a calcolare la data di addebito.
  const now=new Date();
  const todayIso=iso(now);
  const end=cycleEndDate();
@@ -723,33 +725,44 @@ function calc(){
  const inc=m.filter(x=>x.type==="Entrata").reduce((a,x)=>a+(Number(x.amount)||0),0);
  const sp=m.filter(x=>x.type==="Spesa").reduce((a,x)=>a+(Number(x.amount)||0),0);
  const paid=D.future.filter(x=>x.paid&&inCycle(x.date)).reduce((a,x)=>a+(Number(x.amount)||0),0);
- // Gli addebiti carta già arrivati nella finestra corrente vengono contabilizzati
- // una sola volta alla data di addebito.
- const cardSettled=D.cardExpenses.filter(x=>inCycle(cardDueDate(x))&&cardDueDate(x)<=todayIso)
-   .reduce((a,x)=>a+(Number(x.amount)||0),0);
+
+ // Addebiti carta già avvenuti nel ciclo corrente: sottratti dal saldo una volta sola.
+ const cardSettled=D.cardExpenses.filter(x=>{
+   const due=cardDueDate(x);
+   return inCycle(due)&&due<=todayIso;
+ }).reduce((a,x)=>a+(Number(x.amount)||0),0);
+
  const bal=(Number(D.s.i)||0)+inc-sp-paid-cardSettled;
- const commitments=D.future.filter(x=>!x.paid&&x.date>=todayIso&&x.date<=endIso).reduce((a,x)=>a+(Number(x.amount)||0),0);
- // Tutti gli acquisti del ciclo con addebito ancora futuro sono riservati.
- // Quelli inseriti oggi NON riducono lo spendibile di oggi: iniziano a pesare
- // dal giorno successivo, distribuendosi sui giorni residui del ciclo.
- const pendingCard=D.cardExpenses.filter(x=>inCycle(x.date)&&cardDueDate(x)>todayIso);
- const cardReserved=pendingCard.reduce((a,x)=>a+(Number(x.amount)||0),0);
- const cardCarryForward=pendingCard.filter(x=>x.date<todayIso)
+ const commitments=D.future.filter(x=>!x.paid&&x.date>=todayIso&&x.date<=endIso)
    .reduce((a,x)=>a+(Number(x.amount)||0),0);
- const todayCashSpent=D.moves.filter(x=>x.type==="Spesa"&&x.date===todayIso).reduce((a,x)=>a+(Number(x.amount)||0),0);
- const todayCardSpent=D.cardExpenses.filter(x=>x.date===todayIso).reduce((a,x)=>a+(Number(x.amount)||0),0);
+
+ // Addebiti carta ancora da effettuare ma previsti entro la fine di questo ciclo.
+ // La data di acquisto non conta: conta esclusivamente la data di addebito.
+ const pendingCard=D.cardExpenses.filter(x=>{
+   const due=cardDueDate(x);
+   return inCycle(due)&&due>todayIso;
+ });
+ const cardReserved=pendingCard.reduce((a,x)=>a+(Number(x.amount)||0),0);
+
+ const todayCashSpent=D.moves.filter(x=>x.type==="Spesa"&&x.date===todayIso)
+   .reduce((a,x)=>a+(Number(x.amount)||0),0);
+ const todayCardSpent=D.cardExpenses.filter(x=>x.date===todayIso)
+   .reduce((a,x)=>a+(Number(x.amount)||0),0);
  const todaySpent=todayCashSpent;
  const protectedSavings=getAutoSavings();
  const todayMidnight=new Date(now.getFullYear(),now.getMonth(),now.getDate());
  const remain=Math.max(1,Math.round((end-todayMidnight)/86400000)+1);
- // La quota di oggi resta indipendente dagli acquisti carta registrati oggi.
- // Gli acquisti dei giorni precedenti vengono invece ripartiti sui giorni rimasti.
+
+ // Il disponibile giornaliero tiene già da parte gli addebiti carta del ciclo.
+ // Gli acquisti con addebito in un ciclo successivo non intaccano il budget attuale.
  const balanceBeforeToday=bal+todayCashSpent;
- const spendableBeforeToday=Math.max(0,balanceBeforeToday-commitments-cardCarryForward-protectedSavings);
+ const spendableBeforeToday=Math.max(0,balanceBeforeToday-commitments-cardReserved-protectedSavings);
  const dailyQuota=spendableBeforeToday/remain;
  const daily=Math.max(0,Math.round((dailyQuota-todayCashSpent)*100)/100);
  const pool=Math.max(0,bal-commitments-cardReserved-protectedSavings);
- return {inc,sp,paid,cardSettled,cardReserved,bal,commitments,daily,remain,endIso,todaySpent,todayCardSpent,protectedSavings,spendablePool:pool};
+
+ return {inc,sp,paid,cardSettled,cardReserved,bal,commitments,daily,remain,endIso,
+   todaySpent,todayCardSpent,protectedSavings,spendablePool:pool};
 }
 
 function render(){
@@ -810,7 +823,7 @@ function renderCardExpenses(){
  // Non eliminare automaticamente acquisti dallo storico: i dati restano
  // disponibili finché l'utente non decide esplicitamente di cancellarli.
  const entries=[...D.cardExpenses].sort((a,b)=>b.date.localeCompare(a.date));
- if(!entries.length){el.innerHTML='<div class="empty">Nessuna spesa carta nel ciclo attuale o in un ciclo di addebito futuro.</div>';return;}
+ if(!entries.length){el.innerHTML='<div class="empty">Nessuna spesa carta registrata.</div>';return;}
  el.innerHTML=entries.map(x=>{
    const card=cardById(x.cardId),due=cardDueDate(x);
    return `<div class="item"><div style="min-width:0;flex:1"><b>${escapeHtml(x.desc||"Acquisto con carta")}</b><div class="muted">${escapeHtml(card?card.name:"Carta non disponibile")} · Acquisto ${x.date.split("-").reverse().join("/")}</div><div class="muted">Addebito previsto ${due.split("-").reverse().join("/")}</div></div><div style="text-align:right"><div class="amount">${euro(x.amount)}</div><div style="display:flex;gap:6px;justify-content:flex-end;margin-top:6px"><button class="smallBtn" onclick="editCardExpense('${x.id}')">Modifica</button><button class="danger smallBtn" onclick="delCardExpense('${x.id}')">Elimina</button></div></div></div>`;
