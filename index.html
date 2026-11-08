@@ -522,7 +522,7 @@ label{color:#f5f5f5!important}
 </div>
 
 <div class="card"><h2>Prossime uscite</h2><div id="next"></div></div>
-<div class="card"><h2>Addebiti futuri carta</h2><div class="muted">Acquisti dopo la chiusura: non riducono lo spendibile del ciclo attuale; vengono conteggiati quando arriva la data di addebito.</div><div id="futureCardDebits"></div></div>
+<div class="card"><h2>Addebiti futuri carta</h2><div class="muted">Tutti gli acquisti ancora da addebitare, suddivisi per carta e data. Un acquisto non riduce lo spendibile di oggi: dal giorno successivo viene distribuito sul budget giornaliero residuo.</div><div id="futureCardDebits"></div></div>
 <div class="card"><h2>Ultimi movimenti</h2><div id="recent"></div></div>
 </section>
 
@@ -542,7 +542,7 @@ label{color:#f5f5f5!important}
 <section id="cards" class="screen">
  <div class="card">
   <div class="sectionHead"><h2>Le mie carte</h2><span class="pill">CARTE</span></div>
-  <div class="muted">Ogni acquisto registrato riduce subito la disponibilità reale. Qui vedi il totale del prossimo addebito per ogni carta.</div>
+  <div class="muted">Registra qui gli acquisti: non riducono lo spendibile di oggi; dal giorno successivo incidono sul budget giornaliero residuo. Qui vedi il prossimo addebito di ogni carta.</div>
   <label>Nome carta</label><input id="cn" placeholder="Es. Visa principale">
   <div class="row"><div><label>Giorno chiusura</label><select id="cclose"></select></div><div><label>Giorno addebito</label><select id="cdebit"></select></div></div>
   <button class="primary" style="width:100%;margin-top:13px" onclick="addCard()">Aggiungi carta</button>
@@ -556,7 +556,7 @@ label{color:#f5f5f5!important}
   <label>Importo (€)</label><input id="cea" type="number" min="0" step=".01" inputmode="decimal" placeholder="0,00">
   <button class="primary" style="width:100%;margin-top:13px" onclick="addCardExpense()">Registra spesa</button>
  </div>
- <div class="card"><h2>Spese delle carte registrate</h2><div class="muted">Puoi modificare o eliminare ogni acquisto. Le spese vengono rimosse automaticamente quando il ciclo che comprende il loro addebito è terminato.</div><div id="cardExpensesList" style="margin-top:12px"></div></div>
+ <div class="card"><h2>Spese delle carte registrate</h2><div class="muted">Puoi modificare o eliminare ogni acquisto. Lo storico degli acquisti viene conservato: puoi modificare o eliminare ogni registrazione.</div><div id="cardExpensesList" style="margin-top:12px"></div></div>
 </section>
 
 <section id="settings" class="screen"><div class="card"><h2>Impostazioni</h2>
@@ -723,31 +723,29 @@ function calc(){
  const inc=m.filter(x=>x.type==="Entrata").reduce((a,x)=>a+(Number(x.amount)||0),0);
  const sp=m.filter(x=>x.type==="Spesa").reduce((a,x)=>a+(Number(x.amount)||0),0);
  const paid=D.future.filter(x=>x.paid&&inCycle(x.date)).reduce((a,x)=>a+(Number(x.amount)||0),0);
- const cardSettled=D.cardExpenses.filter(x=>{
-   // Acquisti entro la chiusura: impattano subito alla data d'acquisto.
-   if(!cardPurchaseAfterClosing(x))return inCycle(x.date);
-   // Acquisti dopo la chiusura: impattano solo nel ciclo che contiene l'addebito.
-   return inCycle(cardDueDate(x));
- }).reduce((a,x)=>a+(Number(x.amount)||0),0);
+ // Gli addebiti carta già arrivati nella finestra corrente vengono contabilizzati
+ // una sola volta alla data di addebito.
+ const cardSettled=D.cardExpenses.filter(x=>inCycle(cardDueDate(x))&&cardDueDate(x)<=todayIso)
+   .reduce((a,x)=>a+(Number(x.amount)||0),0);
  const bal=(Number(D.s.i)||0)+inc-sp-paid-cardSettled;
  const commitments=D.future.filter(x=>!x.paid&&x.date>=todayIso&&x.date<=endIso).reduce((a,x)=>a+(Number(x.amount)||0),0);
- // La spesa con carta è già sottratta alla data d'acquisto: non riservarla
- // una seconda volta al giorno dell'addebito.
- const cardReserved=0;
- // Solo le spese in contanti/conto registrate nei movimenti riducono direttamente
- // lo spendibile di oggi. Gli acquisti con carta riducono già il saldo reale (bal),
- // ma NON vanno sottratti una seconda volta come spesa giornaliera: devono solo
- // far ricalcolare la quota giornaliera in base al nuovo budget residuo.
+ // Tutti gli acquisti del ciclo con addebito ancora futuro sono riservati.
+ // Quelli inseriti oggi NON riducono lo spendibile di oggi: iniziano a pesare
+ // dal giorno successivo, distribuendosi sui giorni residui del ciclo.
+ const pendingCard=D.cardExpenses.filter(x=>inCycle(x.date)&&cardDueDate(x)>todayIso);
+ const cardReserved=pendingCard.reduce((a,x)=>a+(Number(x.amount)||0),0);
+ const cardCarryForward=pendingCard.filter(x=>x.date<todayIso)
+   .reduce((a,x)=>a+(Number(x.amount)||0),0);
  const todayCashSpent=D.moves.filter(x=>x.type==="Spesa"&&x.date===todayIso).reduce((a,x)=>a+(Number(x.amount)||0),0);
  const todayCardSpent=D.cardExpenses.filter(x=>x.date===todayIso).reduce((a,x)=>a+(Number(x.amount)||0),0);
  const todaySpent=todayCashSpent;
  const protectedSavings=getAutoSavings();
  const todayMidnight=new Date(now.getFullYear(),now.getMonth(),now.getDate());
  const remain=Math.max(1,Math.round((end-todayMidnight)/86400000)+1);
- // Ricostruisce il budget prima delle sole spese cash di oggi. Le spese carta
- // restano invece già sottratte da bal e incidono soltanto sul ricalcolo della quota.
+ // La quota di oggi resta indipendente dagli acquisti carta registrati oggi.
+ // Gli acquisti dei giorni precedenti vengono invece ripartiti sui giorni rimasti.
  const balanceBeforeToday=bal+todayCashSpent;
- const spendableBeforeToday=Math.max(0,balanceBeforeToday-commitments-cardReserved-protectedSavings);
+ const spendableBeforeToday=Math.max(0,balanceBeforeToday-commitments-cardCarryForward-protectedSavings);
  const dailyQuota=spendableBeforeToday/remain;
  const daily=Math.max(0,Math.round((dailyQuota-todayCashSpent)*100)/100);
  const pool=Math.max(0,bal-commitments-cardReserved-protectedSavings);
@@ -790,24 +788,27 @@ function renderFutureCardDebits(){
  const el=document.getElementById("futureCardDebits");
  if(!el)return;
  const today=iso(new Date());
- const deferred=D.cardExpenses.filter(x=>cardPurchaseAfterClosing(x)&&cardDueDate(x)>today);
- if(!deferred.length){el.innerHTML='<div class="empty">Nessun addebito futuro da acquisti dopo la chiusura.</div>';return;}
+ const pending=D.cardExpenses.filter(x=>cardDueDate(x)>today);
+ if(!pending.length){el.innerHTML='<div class="empty">Nessun acquisto carta in attesa di addebito.</div>';return;}
  const groups={};
- deferred.forEach(x=>{const due=cardDueDate(x);groups[due]=(groups[due]||0)+(Number(x.amount)||0)});
- const rows=Object.keys(groups).sort().map(due=>`<div class="item"><div><b>Addebito ${due.split("-").reverse().join("/")}</b><div class="muted">Acquisti successivi alla chiusura</div></div><div class="amount">${euro(groups[due])}</div></div>`).join("");
- const total=deferred.reduce((sum,x)=>sum+(Number(x.amount)||0),0);
- el.innerHTML=`<div class="savingTop"><div class="muted">Totale da addebitare</div><div class="cardTotal">${euro(total)}</div></div>${rows}`;
+ pending.forEach(x=>{
+   const due=cardDueDate(x),card=cardById(x.cardId);
+   const name=card?card.name:"Carta non disponibile";
+   const k=`${name}__${due}`;
+   if(!groups[k])groups[k]={name,due,total:0};
+   groups[k].total+=(Number(x.amount)||0);
+ });
+ const rows=Object.values(groups).sort((a,b)=>a.due.localeCompare(b.due)||a.name.localeCompare(b.name))
+   .map(g=>`<div class="item"><div><b>${escapeHtml(g.name)}</b><div class="muted">Addebito ${g.due.split("-").reverse().join("/")}</div></div><div class="amount">${euro(g.total)}</div></div>`).join("");
+ const total=pending.reduce((sum,x)=>sum+(Number(x.amount)||0),0);
+ el.innerHTML=`<div class="savingTop"><div class="muted">Totale ancora da addebitare</div><div class="cardTotal">${euro(total)}</div></div>${rows}`;
 }
 
 function renderCardExpenses(){
  const el=document.getElementById("cardExpensesList");
  if(!el)return;
- // Conserva le spese fino alla fine del ciclo in cui viene effettuato l'addebito.
- // In questo modo restano visibili e modificabili, ma non si accumulano per sempre.
- const start=cycleStartDate();
- const before=D.cardExpenses.length;
- D.cardExpenses=D.cardExpenses.filter(x=>dt(cardDueDate(x))>=start);
- if(D.cardExpenses.length!==before)localStorage.setItem(key,JSON.stringify(D));
+ // Non eliminare automaticamente acquisti dallo storico: i dati restano
+ // disponibili finché l'utente non decide esplicitamente di cancellarli.
  const entries=[...D.cardExpenses].sort((a,b)=>b.date.localeCompare(a.date));
  if(!entries.length){el.innerHTML='<div class="empty">Nessuna spesa carta nel ciclo attuale o in un ciclo di addebito futuro.</div>';return;}
  el.innerHTML=entries.map(x=>{
@@ -830,7 +831,7 @@ function renderCards(){
  if(!cardsList||!ceCard)return;
  const today=iso(new Date());
  cardsList.innerHTML=D.cards.length?D.cards.map(c=>{
-   const upcoming=D.cardExpenses.filter(x=>x.cardId===c.id&&cardDueDate(x)>=today);
+   const upcoming=D.cardExpenses.filter(x=>x.cardId===c.id&&cardDueDate(x)>today);
    const nextDue=upcoming.map(cardDueDate).sort()[0];
    const nextTotal=nextDue?upcoming.filter(x=>cardDueDate(x)===nextDue).reduce((a,x)=>a+(Number(x.amount)||0),0):0;
    const isConad=String(c.name||"").trim().toLowerCase()==="conad";
