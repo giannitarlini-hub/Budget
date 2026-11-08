@@ -491,24 +491,23 @@ label{color:#f5f5f5!important}
 
 <section id="home" class="screen on">
 <div class="card hero">
-<div class="muted">Disponibilità reale</div><div class="big" id="balance"></div><p class="muted" id="heroSub"></p>
+<div class="muted">Saldo attuale</div><div class="big" id="balance"></div><p class="muted" id="heroSub"></p>
 <div class="heroGrid">
-<div class="heroMini"><div class="muted">Budget per spese</div><div class="v" id="spendablePool"></div></div>
-<div class="heroMini"><div class="muted">Fine ciclo</div><div class="v" id="cycleEndLabel"></div></div>
+<div class="heroMini"><div class="muted">Risparmio protetto</div><div class="v" id="spendablePool"></div></div>
+<div class="heroMini"><div class="muted">Data previsione</div><div class="v" id="cycleEndLabel"></div></div>
 </div></div>
 
-<div class="grid">
-<div class="metric"><div class="muted">Spendibile oggi</div><b id="daily"></b></div>
-<div class="metric"><div class="muted">Spese mese</div><b id="spent"></b></div>
-<div class="metric"><div class="muted">Entrate mese</div><b id="income"></b></div>
-<div class="metric"><div class="muted">Da pagare</div><b id="committed"></b></div>
-</div>
-
-<div class="card affordability">
-<div class="sectionHead"><h2>Posso permettermelo?</h2><span class="pill" id="affordPill">CHECK</span></div>
-<div class="muted" style="margin-bottom:10px">Inserisci l'importo senza registrare la spesa.</div>
-<div class="row"><input id="affordAmount" type="number" min="0" step=".01" inputmode="decimal" placeholder="Es. 35,00 €" oninput="checkAffordability()"><button class="primary" onclick="checkAffordability(true)">Verifica</button></div>
-<div id="affordResult" class="affordResult muted">Inserisci un importo per fare il controllo.</div>
+<div class="card">
+<div class="sectionHead"><h2>Prossimo accredito e addebiti</h2><span class="pill">PREVISIONE</span></div>
+<div class="muted" style="margin-bottom:12px">Previsione fino al <b id="forecastDate"></b></div>
+<div class="row" style="justify-content:space-between"><span>Entrate previste</span><b id="forecastIncome"></b></div>
+<div class="row" style="justify-content:space-between;margin-top:8px"><span>Uscite e carte previste</span><b id="forecastOutgoings"></b></div>
+<div style="border-top:1px solid var(--line);margin:12px 0"></div>
+<div class="muted">Saldo previsto dopo entrate e addebiti</div>
+<div class="big" id="forecastBalance"></div>
+<div class="muted" style="margin-top:6px">Disponibile dopo il risparmio protetto</div>
+<div class="v" id="forecastSpendable" style="font-size:22px;font-weight:800"></div>
+<div class="muted" style="margin-top:10px;font-size:12px">Per inserire lo stipendio: Nuovo movimento → Entrata → data effettiva di accredito.</div>
 </div>
 
 <div class="card savings">
@@ -522,7 +521,7 @@ label{color:#f5f5f5!important}
 </div>
 
 <div class="card"><h2>Prossime uscite</h2><div id="next"></div></div>
-<div class="card"><h2>Addebiti futuri carta</h2><div class="muted">Tutti gli acquisti ancora da addebitare, suddivisi per carta e data. Un acquisto non riduce lo spendibile di oggi: dal giorno successivo viene distribuito sul budget giornaliero residuo.</div><div id="futureCardDebits"></div></div>
+<div class="card"><h2>Addebiti futuri carta</h2><div class="muted">Tutti gli acquisti ancora da addebitare, suddivisi per carta e data. Gli acquisti vengono conteggiati nella previsione del giorno in cui saranno addebitati.</div><div id="futureCardDebits"></div></div>
 <div class="card"><h2>Ultimi movimenti</h2><div id="recent"></div></div>
 </section>
 
@@ -542,7 +541,7 @@ label{color:#f5f5f5!important}
 <section id="cards" class="screen">
  <div class="card">
   <div class="sectionHead"><h2>Le mie carte</h2><span class="pill">CARTE</span></div>
-  <div class="muted">Registra qui gli acquisti: non riducono lo spendibile di oggi; dal giorno successivo incidono sul budget giornaliero residuo. Qui vedi il prossimo addebito di ogni carta.</div>
+  <div class="muted">Registra qui gli acquisti: il loro importo viene considerato nella previsione solo alla data di addebito. Qui vedi il prossimo addebito di ogni carta.</div>
   <label>Nome carta</label><input id="cn" placeholder="Es. Visa principale">
   <div class="row"><div><label>Giorno chiusura</label><select id="cclose"></select></div><div><label>Giorno addebito</label><select id="cdebit"></select></div></div>
   <button class="primary" style="width:100%;margin-top:13px" onclick="addCard()">Aggiungi carta</button>
@@ -689,18 +688,17 @@ function getAutoSavings(){
  const k=currentCycleKey();
  let st=null;
  try{st=JSON.parse(localStorage.getItem(savingsKey)||"null")}catch(e){}
- // Correzione del secondo ciclo: se il contatore risulta ancora 200 €
- // lo porta a 400 €, anche se una precedente migrazione era già stata segnata.
- // Accetta sia numeri sia valori numerici salvati come testo.
- if(st && Number(st.saved)===200){
-   st.saved=400;
-   st.lastCycle=k;
-   localStorage.setItem(savingsKey,JSON.stringify(st));
- } else if(!st || !Number.isFinite(Number(st.saved)) || !st.lastCycle){
-   st={saved:target,lastCycle:k};
+ // Il gestionale è al secondo ciclo: il valore minimo corretto è 400 €.
+ // Se il vecchio archivio riporta 200 € (o non ha ancora un contatore),
+ // riallinea soltanto il risparmio protetto. Dal ciclo successivo aggiunge 200 €.
+ if(!st || !Number.isFinite(Number(st.saved)) || !st.lastCycle){
+   st={saved:400,lastCycle:k};
  } else {
    st.saved=Number(st.saved);
-   if(st.lastCycle!==k){
+   if(st.saved===200){
+     st.saved=400;
+     st.lastCycle=k;
+   } else if(st.lastCycle!==k){
      const a=dt(st.lastCycle),b=dt(k);
      let cycles=(b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth());
      cycles=Math.max(1,cycles);
@@ -708,72 +706,72 @@ function getAutoSavings(){
      st.lastCycle=k;
    }
  }
- st.saved=Math.max(target,Math.round(st.saved*100)/100);
+ st.saved=Math.max(400,Math.round(st.saved*100)/100);
  localStorage.setItem(savingsKey,JSON.stringify(st));
  return st.saved;
 }
 
 function calc(){
- // Il budget considera ogni acquisto carta nel ciclo che contiene la DATA DI ADDEBITO.
- // Esempio Hello! (chiusura 21, addebito 5): 18/10 -> 05/11; 22/10 -> 05/12.
- // La data di acquisto serve solo a calcolare la data di addebito.
  const now=new Date();
  const todayIso=iso(now);
  const end=cycleEndDate();
  const endIso=iso(end);
- const m=D.moves.filter(x=>inCycle(x.date));
- const inc=m.filter(x=>x.type==="Entrata").reduce((a,x)=>a+(Number(x.amount)||0),0);
- const sp=m.filter(x=>x.type==="Spesa").reduce((a,x)=>a+(Number(x.amount)||0),0);
- const paid=D.future.filter(x=>x.paid&&inCycle(x.date)).reduce((a,x)=>a+(Number(x.amount)||0),0);
 
- // Addebiti carta già avvenuti nel ciclo corrente: sottratti dal saldo una volta sola.
+ // Saldo attuale: saldo iniziale più movimenti già avvenuti e addebiti carta già arrivati.
+ const actualMoves=D.moves.filter(x=>inCycle(x.date)&&x.date<=todayIso);
+ const actualIncome=actualMoves.filter(x=>x.type==="Entrata").reduce((a,x)=>a+(Number(x.amount)||0),0);
+ const actualExpenses=actualMoves.filter(x=>x.type==="Spesa").reduce((a,x)=>a+(Number(x.amount)||0),0);
+ const actualFuturePaid=D.future.filter(x=>x.paid&&inCycle(x.date)&&x.date<=todayIso)
+   .reduce((a,x)=>a+(Number(x.amount)||0),0);
  const cardSettled=D.cardExpenses.filter(x=>{
    const due=cardDueDate(x);
    return inCycle(due)&&due<=todayIso;
  }).reduce((a,x)=>a+(Number(x.amount)||0),0);
+ const actualBalance=(Number(D.s.i)||0)+actualIncome-actualExpenses-actualFuturePaid-cardSettled;
 
- const bal=(Number(D.s.i)||0)+inc-sp-paid-cardSettled;
- const commitments=D.future.filter(x=>!x.paid&&x.date>=todayIso&&x.date<=endIso)
+ // Entrate e uscite future fino alla fine del ciclo.
+ const futureMoves=D.moves.filter(x=>inCycle(x.date)&&x.date>todayIso);
+ const futureIncome=futureMoves.filter(x=>x.type==="Entrata").reduce((a,x)=>a+(Number(x.amount)||0),0);
+ const futureMoveExpenses=futureMoves.filter(x=>x.type==="Spesa").reduce((a,x)=>a+(Number(x.amount)||0),0);
+ const futureBills=D.future.filter(x=>!x.paid&&inCycle(x.date)&&x.date>todayIso)
    .reduce((a,x)=>a+(Number(x.amount)||0),0);
-
- // Addebiti carta ancora da effettuare ma previsti entro la fine di questo ciclo.
- // La data di acquisto non conta: conta esclusivamente la data di addebito.
  const pendingCard=D.cardExpenses.filter(x=>{
    const due=cardDueDate(x);
    return inCycle(due)&&due>todayIso;
  });
- const cardReserved=pendingCard.reduce((a,x)=>a+(Number(x.amount)||0),0);
+ const futureCardDebits=pendingCard.reduce((a,x)=>a+(Number(x.amount)||0),0);
+ const futureOutgoings=futureMoveExpenses+futureBills+futureCardDebits;
+ const projectedBalance=actualBalance+futureIncome-futureOutgoings;
 
+ const protectedSavings=getAutoSavings();
+ const projectedSpendable=Math.max(0,projectedBalance-protectedSavings);
  const todayCashSpent=D.moves.filter(x=>x.type==="Spesa"&&x.date===todayIso)
    .reduce((a,x)=>a+(Number(x.amount)||0),0);
  const todayCardSpent=D.cardExpenses.filter(x=>x.date===todayIso)
    .reduce((a,x)=>a+(Number(x.amount)||0),0);
- const todaySpent=todayCashSpent;
- const protectedSavings=getAutoSavings();
  const todayMidnight=new Date(now.getFullYear(),now.getMonth(),now.getDate());
  const remain=Math.max(1,Math.round((end-todayMidnight)/86400000)+1);
+ const daily=Math.max(0,Math.round((projectedSpendable/remain)*100)/100);
 
- // Il disponibile giornaliero tiene già da parte gli addebiti carta del ciclo.
- // Gli acquisti con addebito in un ciclo successivo non intaccano il budget attuale.
- const balanceBeforeToday=bal+todayCashSpent;
- const spendableBeforeToday=Math.max(0,balanceBeforeToday-commitments-cardReserved-protectedSavings);
- const dailyQuota=spendableBeforeToday/remain;
- const daily=Math.max(0,Math.round((dailyQuota-todayCashSpent)*100)/100);
- const pool=Math.max(0,bal-commitments-cardReserved-protectedSavings);
-
- return {inc,sp,paid,cardSettled,cardReserved,bal,commitments,daily,remain,endIso,
-   todaySpent,todayCardSpent,protectedSavings,spendablePool:pool};
+ return {bal:actualBalance,actualBalance,futureIncome,futureOutgoings,futureCardDebits,
+   projectedBalance,projectedSpendable,cardSettled,protectedSavings,daily,remain,endIso,
+   todaySpent:todayCashSpent,todayCardSpent,spendablePool:projectedSpendable,
+   commitments:futureBills+futureMoveExpenses};
 }
 
 function render(){
  let c=calc();
  document.getElementById("period").textContent=`Ciclo ${String(D.s.payDay).padStart(2,"0")} → ${String(D.s.payDay).padStart(2,"0")}`;
- ["balance","daily","spent","income","committed"].forEach((x,i)=>{
-   document.getElementById(x).textContent=euro([c.bal,c.daily,c.sp+c.paid+c.cardSettled,c.inc,c.commitments][i]);
- });
- document.getElementById("spendablePool").textContent=euro(c.spendablePool);
- document.getElementById("cycleEndLabel").textContent=new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"2-digit"}).format(cycleEndDate());
- document.getElementById("heroSub").textContent=`Risparmio programmato ${euro(D.s.t)} · Impegni futuri ${euro(c.commitments)} · Budget fino al ${c.endIso.slice(8,10)}/${c.endIso.slice(5,7)}`;
+ document.getElementById("balance").textContent=euro(c.actualBalance);
+ document.getElementById("spendablePool").textContent=euro(c.protectedSavings);
+ const forecastDate=new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"2-digit"}).format(dt(c.endIso));
+ document.getElementById("cycleEndLabel").textContent=forecastDate;
+ document.getElementById("forecastDate").textContent=forecastDate;
+ document.getElementById("forecastIncome").textContent=euro(c.futureIncome);
+ document.getElementById("forecastOutgoings").textContent=euro(c.futureOutgoings);
+ document.getElementById("forecastBalance").textContent=euro(c.projectedBalance);
+ document.getElementById("forecastSpendable").textContent=euro(c.projectedSpendable);
+ document.getElementById("heroSub").textContent="Saldo reale calcolato fino a oggi.";
 
  const saved=c.protectedSavings,target=DEFAULT_SAVINGS;
  document.getElementById("savedAccum").textContent=euro(saved);
