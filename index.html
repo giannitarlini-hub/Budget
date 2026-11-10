@@ -475,15 +475,21 @@ function calc(){
  const end=cycleEndDate();
  const endIso=iso(end);
 
- // Saldo attuale: saldo iniziale più movimenti già avvenuti e addebiti carta già arrivati.
- const actualMoves=D.moves.filter(x=>inCycle(x.date)&&x.date<=todayIso);
+ // SALDO REALE CONTINUATIVO:
+ // Il saldo iniziale è il capitale di partenza inserito nelle impostazioni
+ // (anno/mese + giorno di riscossione). Da quella data in poi si sommano
+ // tutte le entrate e si sottraggono tutte le uscite, anche quando cambia ciclo.
+ // Il ciclo mensile resta separato e serve soltanto per risparmio e previsioni.
+ const balanceStart=payDate(Number(D.s.y)||today.getFullYear(),(Number(D.s.m)||today.getMonth()+1)-1,Number(D.s.payDay)||10);
+ const balanceStartIso=iso(balanceStart);
+ const actualMoves=D.moves.filter(x=>x.date>=balanceStartIso&&x.date<=todayIso);
  const actualIncome=actualMoves.filter(x=>x.type==="Entrata").reduce((a,x)=>a+(Number(x.amount)||0),0);
  const actualExpenses=actualMoves.filter(x=>x.type==="Spesa").reduce((a,x)=>a+(Number(x.amount)||0),0);
- const actualFuturePaid=D.future.filter(x=>x.paid&&inCycle(x.date)&&x.date<=todayIso)
+ const actualFuturePaid=D.future.filter(x=>x.paid&&x.date>=balanceStartIso&&x.date<=todayIso)
    .reduce((a,x)=>a+(Number(x.amount)||0),0);
  const cardSettled=D.cardExpenses.filter(x=>{
    const due=cardDueDate(x);
-   return inCycle(due)&&due<=todayIso;
+   return due>=balanceStartIso&&due<=todayIso;
  }).reduce((a,x)=>a+(Number(x.amount)||0),0);
  const actualBalance=(Number(D.s.i)||0)+actualIncome-actualExpenses-actualFuturePaid-cardSettled;
 
