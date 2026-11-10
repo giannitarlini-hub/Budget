@@ -318,17 +318,7 @@ input:focus,select:focus,textarea:focus{
   <button class="primary" style="width:100%;margin-top:13px" onclick="addCard()">Aggiungi carta</button>
   <div id="cardsList" style="margin-top:14px"></div>
  </div>
- <div class="card" id="cardPaymentEntry">
-  <div class="sectionHead"><h2>＋ Registra pagamento con carta</h2><span class="pill">NUOVO ACQUISTO</span></div>
-  <div class="muted">Inserisci qui ogni acquisto pagato con una carta. Il gestionale calcola automaticamente quando verrà addebitato e lo considera nel mese corretto.</div>
-  <label>Carta utilizzata</label><select id="ceCard"></select>
-  <label>Data del pagamento</label><input id="ced" type="date">
-  <label>Descrizione (facoltativa)</label><input id="cex" placeholder="Es. Spesa supermercato">
-  <label>Importo pagato (€)</label><input id="cea" type="number" min="0" step=".01" inputmode="decimal" placeholder="0,00">
-  <button class="primary" style="width:100%;margin-top:13px" onclick="addCardExpense()">Registra pagamento con carta</button>
- </div>
- <div class="card"><h2>Spese delle carte registrate</h2><div class="muted">Puoi modificare o eliminare ogni acquisto. Lo storico degli acquisti viene conservato: puoi modificare o eliminare ogni registrazione.</div><div id="cardExpensesList" style="margin-top:12px"></div></div>
-</section>
+ </section>
 
 <section id="settings" class="screen"><div class="card"><h2>Impostazioni</h2>
 <div class="grid"><div><label>Anno</label><input id="sy" type="number"></div><div><label>Mese</label><select id="sm"></select></div></div>
@@ -617,20 +607,41 @@ function editCardExpense(expenseId){
  save();toast("Spesa carta aggiornata");
 }
 function renderCards(){
- const cardsList=document.getElementById("cardsList"),ceCard=document.getElementById("ceCard");
- if(!cardsList||!ceCard)return;
+ const cardsList=document.getElementById("cardsList");
+ if(!cardsList)return;
  const today=iso(new Date());
  cardsList.innerHTML=D.cards.length?D.cards.map(c=>{
-   const upcoming=D.cardExpenses.filter(x=>x.cardId===c.id&&cardDueDate(x)>today);
+   const cardExpenses=[...D.cardExpenses].filter(x=>x.cardId===c.id).sort((a,b)=>b.date.localeCompare(a.date));
+   const upcoming=cardExpenses.filter(x=>cardDueDate(x)>today);
    const nextDue=upcoming.map(cardDueDate).sort()[0];
    const nextTotal=nextDue?upcoming.filter(x=>cardDueDate(x)===nextDue).reduce((a,x)=>a+(Number(x.amount)||0),0):0;
    const isConad=String(c.name||"").trim().toLowerCase()==="conad";
    const closing=Number(c.closingDay ?? c.settleDay)||1;
    const debit=Number(c.debitDay)||closing;
    const closingLabel=isConad||closing===31?"ultimo giorno del mese":String(closing);
-   return `<div class="cardTile"><div class="cardTileHead"><div><h3>💳 ${escapeHtml(c.name)}</h3><div class="sub">Chiusura ${closingLabel} · addebito il ${debit}</div>${nextDue?`<div class="sub">Prossimo addebito: ${nextDue.split("-").reverse().join("/")}</div>`:"<div class=\"sub\">Nessun addebito futuro registrato</div>"}</div><div style="text-align:right"><div class="cardTotal">${euro(nextTotal)}</div><div class="sub">Prossimo addebito</div></div></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="primary smallBtn" onclick="quickCardExpense('${c.id}')">＋ Aggiungi spesa</button><button class="danger smallBtn" onclick="delCard('${c.id}')">Elimina carta</button></div></div>`;
+   const nextDueHtml=nextDue?`<div class="sub">Prossimo addebito: ${nextDue.split("-").reverse().join("/")}</div>`:'<div class="sub">Nessun addebito futuro registrato</div>';
+   const movementRows=cardExpenses.length?cardExpenses.map(x=>{
+     const due=cardDueDate(x);
+     return `<div class="item"><div style="min-width:0;flex:1"><b>${escapeHtml(x.desc||"Acquisto con carta")}</b><div class="muted">Acquisto ${x.date.split("-").reverse().join("/")} · Addebito ${due.split("-").reverse().join("/")}</div></div><div style="text-align:right"><div class="amount">${euro(x.amount)}</div><div style="display:flex;gap:5px;justify-content:flex-end;margin-top:5px"><button class="smallBtn" onclick="editCardExpense('${x.id}')">Modifica</button><button class="danger smallBtn" onclick="delCardExpense('${x.id}')">Elimina</button></div></div></div>`;
+   }).join(""):'<div class="empty">Nessun movimento registrato per questa carta.</div>';
+   return `<div class="cardTile">
+     <div class="cardTileHead"><div><h3>💳 ${escapeHtml(c.name)}</h3><div class="sub">Chiusura ${closingLabel} · addebito il ${debit}</div>${nextDueHtml}</div><div style="text-align:right"><div class="cardTotal">${euro(nextTotal)}</div><div class="sub">Prossimo addebito</div></div></div>
+     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+       <button class="primary smallBtn" onclick="quickCardExpense('${c.id}')">＋ Aggiungi spesa</button>
+       <button class="light smallBtn" onclick="toggleCardMovements('${c.id}')">Movimenti (${cardExpenses.length})</button>
+       <button class="danger smallBtn" onclick="delCard('${c.id}')">Elimina carta</button>
+     </div>
+     <div id="cardMovements_${c.id}" style="display:none;margin-top:12px;padding-top:8px;border-top:1px solid var(--line)">${movementRows}</div>
+   </div>`;
  }).join(""):'<div class="empty">Aggiungi la tua prima carta qui sopra.</div>';
- ceCard.innerHTML=D.cards.length?D.cards.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join(""):'<option value="">Aggiungi prima una carta</option>';
+}
+function toggleCardMovements(cardId){
+ const el=document.getElementById("cardMovements_"+cardId);
+ if(!el)return;
+ const opening=el.style.display==="none";
+ el.style.display=opening?"block":"none";
+ const button=[...document.querySelectorAll("#cardsList button")].find(b=>b.getAttribute("onclick")===`toggleCardMovements('${cardId}')`);
+ if(button)button.textContent=(opening?"Nascondi movimenti":"Movimenti")+" ("+D.cardExpenses.filter(x=>x.cardId===cardId).length+")";
 }
 function escapeHtml(v){return String(v??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
 function addCard(){
@@ -805,7 +816,6 @@ function resetData(){
  }
 }
 function fill(){
- document.getElementById("ced").value=iso(new Date());
  document.getElementById("mc").innerHTML=cats.map(x=>`<option>${x}</option>`).join("");
  document.getElementById("fc").innerHTML=fcats.map(x=>`<option>${x}</option>`).join("");
   const cardDays=Array.from({length:31},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join("");
@@ -818,7 +828,7 @@ function fill(){
  document.getElementById("pd").innerHTML=Array.from({length:31},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join("");
  document.getElementById("sy").value=D.s.y;document.getElementById("sm").value=D.s.m;document.getElementById("si").value=D.s.i;
  document.getElementById("st").value=DEFAULT_SAVINGS;document.getElementById("pd").value=D.s.payDay||10;
- document.getElementById("md").value=iso(new Date());document.getElementById("fd").value=iso(new Date());document.getElementById("ced").value=iso(new Date());
+ document.getElementById("md").value=iso(new Date());document.getElementById("fd").value=iso(new Date());
  // Configurazione iniziale delle tre carte: una sola volta, senza azzerare dati o acquisti.
  if(!D.cardSetupV1){
    const defaults=[["Hello! Card",21,5],["Amex",20,5],["Conad",31,10]];
