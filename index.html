@@ -234,6 +234,20 @@ input:focus,select:focus,textarea:focus{
 @media(prefers-reduced-motion:reduce){button{transition:none!important}}
 
 
+
+/* Inserimento rapido spesa per singola carta */
+.quick-modal-backdrop{position:fixed;inset:0;background:rgba(10,25,50,.62);backdrop-filter:blur(5px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px}
+.quick-modal{width:min(100%,460px);background:#fff;border-radius:24px;padding:22px;box-shadow:0 24px 70px rgba(0,0,0,.25)}
+.quick-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.quick-modal-head h2{margin:0;font-size:24px}
+.quick-modal-close{border:0;background:#edf3fb;border-radius:50%;width:38px;height:38px;font-size:24px;color:#173b68}
+.quick-card-info{display:flex;align-items:center;gap:13px;background:#f3f7fc;border:1px solid #dce7f5;border-radius:16px;padding:13px;margin-bottom:18px}
+.quick-card-info .card-symbol{width:54px;height:44px;border-radius:11px;background:#205f9f;color:white;display:flex;align-items:center;justify-content:center;font-weight:800}
+.quick-modal input{width:100%;border:1px solid #ccd9e8;border-radius:13px;padding:14px;font-size:18px;margin:6px 0 14px}
+.quick-modal label{display:block;font-weight:650;color:#243b59}
+.quick-modal .quick-save{width:100%;margin-top:6px;background:linear-gradient(135deg,#286caf,#194d80);color:white;border:0;border-radius:14px;padding:15px;font-size:17px;font-weight:750}
+.quick-modal .quick-cancel{width:100%;margin-top:9px;background:#eaf1f9;color:#24496f;border:0;border-radius:14px;padding:13px;font-size:16px;font-weight:650}
+
 </style>
 </head>
 <body>
@@ -614,7 +628,7 @@ function renderCards(){
    const closing=Number(c.closingDay ?? c.settleDay)||1;
    const debit=Number(c.debitDay)||closing;
    const closingLabel=isConad||closing===31?"ultimo giorno del mese":String(closing);
-   return `<div class="cardTile"><div class="cardTileHead"><div><h3>💳 ${escapeHtml(c.name)}</h3><div class="sub">Chiusura ${closingLabel} · addebito il ${debit}</div>${nextDue?`<div class="sub">Prossimo addebito: ${nextDue.split("-").reverse().join("/")}</div>`:"<div class=\"sub\">Nessun addebito futuro registrato</div>"}</div><div style="text-align:right"><div class="cardTotal">${euro(nextTotal)}</div><div class="sub">Prossimo addebito</div></div></div><button class="danger smallBtn" onclick="delCard('${c.id}')">Elimina carta</button></div>`;
+   return `<div class="cardTile"><div class="cardTileHead"><div><h3>💳 ${escapeHtml(c.name)}</h3><div class="sub">Chiusura ${closingLabel} · addebito il ${debit}</div>${nextDue?`<div class="sub">Prossimo addebito: ${nextDue.split("-").reverse().join("/")}</div>`:"<div class=\"sub\">Nessun addebito futuro registrato</div>"}</div><div style="text-align:right"><div class="cardTotal">${euro(nextTotal)}</div><div class="sub">Prossimo addebito</div></div></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="primary smallBtn" onclick="quickCardExpense('${c.id}')">＋ Aggiungi spesa</button><button class="danger smallBtn" onclick="delCard('${c.id}')">Elimina carta</button></div></div>`;
  }).join(""):'<div class="empty">Aggiungi la tua prima carta qui sopra.</div>';
  ceCard.innerHTML=D.cards.length?D.cards.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join(""):'<option value="">Aggiungi prima una carta</option>';
 }
@@ -628,6 +642,43 @@ function addCard(){
  D.cards.push({id:id(),name,closingDay,debitDay});
  document.getElementById("cn").value="";save();toast("Carta aggiunta");
 }
+function quickCardExpense(cardId){
+ const card=cardById(cardId);
+ if(!card)return toast("Carta non trovata");
+ const overlay=document.createElement("div");
+ overlay.className="quick-modal-backdrop";
+ overlay.id="quickCardModal";
+ overlay.innerHTML=`<div class="quick-modal" role="dialog" aria-modal="true">
+ <div class="quick-modal-head"><h2>Aggiungi spesa</h2><button class="quick-modal-close" type="button" onclick="closeQuickCardModal()">×</button></div>
+ <div class="quick-card-info"><div class="card-symbol">💳</div><div><strong>${escapeHtml(card.name)}</strong><div class="sub">Carta selezionata · addebito automatico</div></div></div>
+ <form onsubmit="saveQuickCardExpense(event,'${card.id}')">
+ <label>Importo (€)</label><input id="quickCardAmount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="0,00" required>
+ <label>Descrizione</label><input id="quickCardDesc" type="text" placeholder="Es. Spesa supermercato">
+ <label>Data</label><input id="quickCardDate" type="date" value="${iso(new Date())}" required>
+ <button class="quick-save" type="submit">✓ Salva spesa</button>
+ <button class="quick-cancel" type="button" onclick="closeQuickCardModal()">Annulla</button>
+ </form></div>`;
+ overlay.addEventListener("click",e=>{if(e.target===overlay)closeQuickCardModal()});
+ document.body.appendChild(overlay);
+ setTimeout(()=>document.getElementById("quickCardAmount").focus(),80);
+}
+function closeQuickCardModal(){
+ const modal=document.getElementById("quickCardModal");
+ if(modal)modal.remove();
+}
+function saveQuickCardExpense(event,cardId){
+ event.preventDefault();
+ const amount=Math.round(Number(document.getElementById("quickCardAmount").value)*100)/100;
+ const date=document.getElementById("quickCardDate").value||iso(new Date());
+ const desc=document.getElementById("quickCardDesc").value.trim();
+ if(!cardById(cardId))return toast("Carta non trovata");
+ if(!(amount>0))return toast("Importo non valido");
+ D.cardExpenses.push({id:id(),cardId,date,amount,desc:desc||"Acquisto con carta"});
+ closeQuickCardModal();
+ save();
+ toast("Spesa registrata e disponibilità aggiornata");
+}
+
 function addCardExpense(){
  const cardId=document.getElementById("ceCard").value,date=document.getElementById("ced").value||iso(new Date()),amount=Math.round(Number(document.getElementById("cea").value)*100)/100,desc=document.getElementById("cex").value.trim();
  if(!cardId||!cardById(cardId))return toast("Aggiungi o seleziona una carta");
