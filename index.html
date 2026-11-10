@@ -263,9 +263,14 @@ input:focus,select:focus,textarea:focus{
 </div></div>
 
 <div class="card" id="dailyCard">
-<div class="sectionHead"><h2>Spendibile quotidiano</h2><span class="pill">OGGI</span></div>
+<div class="sectionHead"><h2>Media spendibile giornaliera</h2><span class="pill">CICLO</span></div>
 <div class="big" id="daily"></div>
-<div class="muted">Quanto puoi spendere al giorno, considerando la previsione del ciclo e il risparmio protetto.</div>
+<div class="muted">Media disponibile per ciascuno dei giorni che restano nel ciclo, aggiornata in base alle spese.</div>
+<div style="margin-top:16px;padding:14px;border:1px solid #d2ecdf;background:#eff9f4;border-radius:16px">
+ <div class="muted" style="font-weight:700">Disponibile oggi</div>
+ <div class="big" id="todayAvailable" style="font-size:30px;color:#16845b;margin:3px 0 4px"></div>
+ <div class="muted">Quanto puoi ancora spendere oggi. La parte non utilizzata viene redistribuita sui giorni successivi.</div>
+</div>
 </div>
 
 <div class="card">
@@ -519,10 +524,17 @@ function calc(){
    .reduce((a,x)=>a+(Number(x.amount)||0),0);
  const todayMidnight=new Date(now.getFullYear(),now.getMonth(),now.getDate());
  const remain=Math.max(1,Math.round((end-todayMidnight)/86400000)+1);
- const daily=Math.max(0,Math.round((projectedSpendable/remain)*100)/100);
+
+ // Quota assegnata a oggi prima delle spese della giornata.
+ // Le spese di oggi riducono "Disponibile oggi"; il residuo viene
+ // redistribuito sui giorni successivi, facendo aggiornare la media.
+ const dailyBeforeToday=Math.max(0,(projectedSpendable+todayCashSpent)/remain);
+ const todayAvailable=Math.round((dailyBeforeToday-todayCashSpent)*100)/100;
+ const averageDays=(todayCashSpent>0 && remain>1)?remain-1:remain;
+ const daily=Math.max(0,Math.round((projectedSpendable/averageDays)*100)/100);
 
  return {bal:actualBalance,actualBalance,futureIncome,futureOutgoings,futureCardDebits,
-   projectedBalance,projectedSpendable,cardSettled,protectedSavings,daily,remain,endIso,
+   projectedBalance,projectedSpendable,cardSettled,protectedSavings,daily,todayAvailable,remain,endIso,
    todaySpent:todayCashSpent,todayCardSpent,spendablePool:projectedSpendable,
    commitments:futureBills+futureMoveExpenses};
 }
@@ -532,6 +544,7 @@ function render(){
  document.getElementById("period").textContent=`Ciclo ${String(D.s.payDay).padStart(2,"0")} → ${String(D.s.payDay).padStart(2,"0")}`;
  document.getElementById("balance").textContent=euro(c.actualBalance);
  document.getElementById("daily").textContent=euro(c.daily);
+ document.getElementById("todayAvailable").textContent=euro(c.todayAvailable);
  document.getElementById("spendablePool").textContent=euro(c.protectedSavings);
  const forecastDate=new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"2-digit"}).format(dt(c.endIso));
  document.getElementById("cycleEndLabel").textContent=forecastDate;
@@ -707,13 +720,13 @@ function checkAffordability(showToast){
  const old=document.getElementById("affordSimulation");if(old)old.remove();
  if(!(amount>0)){result.textContent="Inserisci un importo per fare il controllo.";return false}
  const c=calc();
- const leftToday=c.daily-amount;
+ const leftToday=c.todayAvailable-amount;
  const pool=c.spendablePool;
  const daysAfter=Math.max(0,c.remain-1);
  const futureDaily=daysAfter>0?Math.max(0,(pool-amount)/daysAfter):Math.max(0,pool-amount);
  const sim=document.createElement("div");
  sim.id="affordSimulation";sim.className="afford-sim";
- const todayLeft=Math.max(0,leftToday);
+ const todayLeft=leftToday;
  sim.innerHTML=`<div class="sim-title">Se fai questa spesa...</div>
  <div class="sim-grid">
  <div class="sim-box"><div class="sim-label">Oggi ti rimangono</div><div class="sim-value">${euro(todayLeft)}</div></div>
@@ -763,8 +776,6 @@ function addMove(){
  // Aggiornamento immediato della schermata: il movimento viene già incluso nel ricalcolo.
  go("home");
  render();
- const dailyEl=document.getElementById("daily");
- if(dailyEl){ const updated=calc(); dailyEl.textContent=euro(updated.daily); }
  document.getElementById("ma").value="";
  document.getElementById("mx").value="";
  toast(movementType==="Spesa"?"Uscita salvata: spendibile aggiornato":"Entrata salvata: spendibile aggiornato");
